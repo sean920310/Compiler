@@ -54,7 +54,7 @@ expr:
     | expr ASTERISK expr         { $$ = $1 * $3; }
     | expr DIVIDE expr         { $$ = $1 / $3; }
     | MINUS expr %prec UMINUS { $$ = -$2; }
-    | PRINT LEFT_PAREN expr RIGHT_PAREN { printf($3;}
+    | PRINT LEFT_PAREN expr RIGHT_PAREN { printf("%f", $3);}
     ;
 
 value:
