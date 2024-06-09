@@ -1,9 +1,7 @@
+/*.o
 /lex.l
 /lex.yy.c
-/lex.yy.o
 /main
-/main.o
 /parser.tab.c
 /parser.tab.h
-/parser.tab.o
 /yacc.y
