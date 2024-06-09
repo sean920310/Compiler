@@ -38,19 +38,19 @@ WRONG_IDENTIFIER    {DIGIT}+{IDENTIFIER}
 <MULTI_LN_COMMENT>\*\/      { BEGIN 0; }       
 <MULTI_LN_COMMENT>.         { ; }
 
-"var"               { printf("<VAR>"); }
-"val"               { printf("<VAL>"); }
-"bool"              { printf("<BOOL>"); }
-"char"              { printf("<CHAR>"); }
-"int"               { printf("<INT>"); }
-"real"              { printf("<REAL>"); }
-"true"              { printf("<TRUE>"); }
-"false"             { printf("<FALSE>"); }
-"class"             { printf("<CLASS>"); }
+"var"               { printf("<VAR>"); return VAR; }
+"val"               { printf("<VAL>"); return VAL; }
+"bool"              { printf("<BOOL>"); return BOOL; }
+"char"              { printf("<CHAR>"); return CHAR; }
+"int"               { printf("<INT>"); return INT; }
+"real"              { printf("<REAL>"); return REAL; }
+"true"              { printf("<TRUE>"); return B_TRUE; }
+"false"             { printf("<FALSE>"); return B_FALSE; }
+"class"             { printf("<CLASS>"); return CLASS; }
 "fun"               { printf("<FUN>"); return FUN; }
 "main"              { printf("<MAIN>"); return MAIN; }
 "print"             { printf("<PRINT>"); return PRINT; }
-"ret"               { printf("<RET>"); }
+"ret"               { printf("<RET>"); return RET; }
 
 "if"                { printf("<IF>"); }
 "else"              { printf("<ELSE>"); }
@@ -65,16 +65,16 @@ WRONG_IDENTIFIER    {DIGIT}+{IDENTIFIER}
 "*"                 { printf("<ASTERISK>"); return ASTERISK; }
 "/"                 { printf("<DIVIDE>"); return DIVIDE; }
 
-"="                 { printf("<ASSIGN>"); }
-"=="                { printf("<EQUAL>"); }
-"!="                { printf("<INEQUAL>"); }
-">"                 { printf("<GREATER>"); }
-"<"                 { printf("<LESS>"); }
-">="                { printf("<GREATER_EQUAL>"); }
-"<="                { printf("<LESS_EQUAL>"); }
-","                 { printf("<COMMA>"); }
-";"                 { printf("<SEMICOLON>"); }
-":"                 { printf("<COLON>"); }
+"="                 { printf("<ASSIGN>"); return ASSIGN; }
+"=="                { printf("<EQUAL>"); return EQUAL; }
+"!="                { printf("<INEQUAL>"); return INEQUAL; }
+">"                 { printf("<GREATER>"); return GREATER; }
+"<"                 { printf("<LESS>"); return LESS; }
+">="                { printf("<GREATER_EQUAL>"); return GREATER_EQUAL; }
+"<="                { printf("<LESS_EQUAL>"); return LESS_EQUAL; }
+","                 { printf("<COMMA>"); return COMMA; }
+";"                 { printf("<SEMICOLON>"); return SEMICOLON; }
+":"                 { printf("<COLON>"); return COLON; }
 
 
 "("                 { printf("<LEFT_PAREN>"); return LEFT_PAREN; }
@@ -88,7 +88,7 @@ WRONG_IDENTIFIER    {DIGIT}+{IDENTIFIER}
 \'\\{ESCAPE_SEQ}\'  { printf("<ESCAPE_SEQ>"); }
 \'.\'               { printf("<CHARACTER>"); }
 {WRONG_IDENTIFIER}  { yyerror("Wrong identifier name"); yyterminate();}
-{IDENTIFIER}        { printf("<IDENTIFIER>"); }
+{IDENTIFIER}        { printf("<IDENTIFIER>"); yylval.id = strdup(yytext); return IDENTIFIER;}
 {INT}               { printf("<INTEGER>"); sscanf(yytext, "%d", &(yylval.intNum)); return INTEGER; }
 {REAL}              { printf("<REALNUMBER>"); sscanf(yytext, "%f", &(yylval.realNum)); return REALNUMBER; }
 

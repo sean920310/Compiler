@@ -1,3 +1,4 @@
 fun main () {
-	print(1 + 1.1);
+    var i: int;
+	print(-1 - 1.1);
 }
