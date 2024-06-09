@@ -5,6 +5,35 @@ void yyerror(const char *s);
 extern int yylex();
 extern int yyparse();
 
+#define MAX_SYMBOLS 256
+
+typedef struct {
+    char name[32];
+    float value;
+} Symbol;
+
+Symbol symbolTable[MAX_SYMBOLS];
+int symbolCount = 0;
+
+int addSymbol(const char *name, float value) {
+    if (symbolCount < MAX_SYMBOLS) {
+        strcpy(symbolTable[symbolCount].name, name);
+        symbolTable[symbolCount].value = value;
+        symbolCount++;
+        return 0; // success
+    }
+    return -1; // symbol table full
+}
+
+Symbol* findSymbol(const char *name) {
+    for (int i = 0; i < symbolCount; i++) {
+        if (strcmp(symbolTable[i].name, name) == 0) {
+            return &symbolTable[i];
+        }
+    }
+    return NULL; // not found
+}
+
 %}
 
 %union {
@@ -23,7 +52,7 @@ extern int yyparse();
 %token <realNum> REALNUMBER
 %token <id> IDENTIFIER
 
-%type <realNum> value expr
+%type <realNum> value expr assignment
 
 %left PLUS MINUS
 %left ASTERISK DIVIDE
@@ -45,17 +74,18 @@ func:
     ;
 
 stmt_list:
-      stmt
-    | stmt_list stmt
+      stmt SEMICOLON
+    | stmt_list stmt SEMICOLON
     ;
 
 stmt:
-      expr SEMICOLON                    { printf("Result: %f\n", $1); }
-    | declare SEMICOLON
+      expr                              { printf("Result: %f\n", $1); }
+    | declare 
+    | assignment 
     ;
 
 declare:
-      VAR IDENTIFIER COLON type         { printf("Declared variable %s\n", $2); }
+      VAR IDENTIFIER COLON type         { addSymbol($2, 0); printf("Declared variable %s\n", $2); }
     ;
 
 type:
@@ -66,7 +96,15 @@ type:
     ;
 
 assignment:
-      IDENTIFIER ASSIGN expr           
+      IDENTIFIER ASSIGN expr            { 
+                                            Symbol *s = findSymbol($1);
+                                                if (s) {
+                                                    s->value = $3;
+                                                    $$ = $3;
+                                                } else {
+                                                    yyerror("Error: undeclared variable" );
+                                                } 
+                                        }        
     ;
 
 expr:
@@ -82,6 +120,14 @@ expr:
 value:
       REALNUMBER                        { $$ = $1; }
     | INTEGER                           { $$ = (float)$1; }
+    | IDENTIFIER                        { 
+                                            Symbol *s = findSymbol($1);
+                                                if (s) {
+                                                    $$ = s->value;
+                                                } else {
+                                                    yyerror("Error: undeclared variable" );
+                                                } 
+                                        } 
     ;
 
 %%
