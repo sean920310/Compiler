@@ -1,0 +1,913 @@
+Terminals unused in grammar
+
+    CLASS
+    RET
+    VAL
+    B_TRUE
+    B_FALSE
+    EQUAL
+    INEQUAL
+    GREATER
+    LESS
+    GREATER_EQUAL
+    LESS_EQUAL
+
+
+State 71 conflicts: 1 shift/reduce
+
+
+Grammar
+
+    0 $accept: program $end
+
+    1 $@1: %empty
+
+    2 program: $@1 main
+
+    3 $@2: %empty
+
+    4 main: FUN MAIN LEFT_PAREN RIGHT_PAREN LEFT_BRACE $@2 func RIGHT_BRACE
+
+    5 func: %empty
+    6     | stmt_list
+
+    7 stmt_list: stmt SEMICOLON
+    8          | stmt_list stmt SEMICOLON
+
+    9 stmt: expr
+   10     | declare
+   11     | assignment
+   12     | print
+
+   13 declare: VAR IDENTIFIER COLON type
+   14        | VAR IDENTIFIER COLON type ASSIGN expr
+   15        | VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE
+
+   16 assignment: IDENTIFIER ASSIGN expr
+
+   17 type: BOOL
+   18     | CHAR
+   19     | INT
+   20     | REAL
+
+   21 array: value
+   22      | array COMMA array
+
+   23 expr: value
+   24     | expr PLUS expr
+   25     | expr MINUS expr
+   26     | expr ASTERISK expr
+   27     | expr DIVIDE expr
+   28     | LEFT_PAREN expr RIGHT_PAREN
+
+   29 $@3: %empty
+
+   30 expr: MINUS $@3 expr
+
+   31 print: PRINT LEFT_PAREN expr RIGHT_PAREN
+   32      | PRINTLN LEFT_PAREN expr RIGHT_PAREN
+
+   33 value: REALNUMBER
+   34      | INTEGER
+   35      | STRING
+   36      | IDENTIFIER
+
+
+Terminals, with rules where they appear
+
+    $end (0) 0
+    error (256)
+    FUN (258) 4
+    MAIN (259) 4
+    PRINT (260) 31
+    PRINTLN (261) 32
+    CLASS (262)
+    RET (263)
+    VAR (264) 13 14 15
+    VAL (265)
+    BOOL (266) 17
+    CHAR (267) 18
+    INT (268) 19
+    REAL (269) 20
+    B_TRUE (270)
+    B_FALSE (271)
+    PLUS (272) 24
+    MINUS (273) 25 30
+    ASTERISK (274) 26
+    DIVIDE (275) 27
+    ASSIGN (276) 14 15 16
+    EQUAL (277)
+    INEQUAL (278)
+    GREATER (279)
+    LESS (280)
+    GREATER_EQUAL (281)
+    LESS_EQUAL (282)
+    COMMA (283) 22
+    SEMICOLON (284) 7 8
+    COLON (285) 13 14 15
+    LEFT_PAREN (286) 4 28 31 32
+    RIGHT_PAREN (287) 4 28 31 32
+    LEFT_BRACKET (288) 15
+    RIGHT_BRACKET (289) 15
+    LEFT_BRACE (290) 4 15
+    RIGHT_BRACE (291) 4 15
+    INTEGER <intNum> (292) 15 34
+    REALNUMBER <realNum> (293) 33
+    STRING <strVal> (294) 35
+    IDENTIFIER <strVal> (295) 13 14 15 16 36
+    UMINUS (296)
+
+
+Nonterminals, with rules where they appear
+
+    $accept (42)
+        on left: 0
+    program (43)
+        on left: 2
+        on right: 0
+    $@1 (44)
+        on left: 1
+        on right: 2
+    main (45)
+        on left: 4
+        on right: 2
+    $@2 (46)
+        on left: 3
+        on right: 4
+    func (47)
+        on left: 5 6
+        on right: 4
+    stmt_list (48)
+        on left: 7 8
+        on right: 6 8
+    stmt (49)
+        on left: 9 10 11 12
+        on right: 7 8
+    declare (50)
+        on left: 13 14 15
+        on right: 10
+    assignment <symbol> (51)
+        on left: 16
+        on right: 11
+    type <symbolType> (52)
+        on left: 17 18 19 20
+        on right: 13 14 15
+    array <arrData> (53)
+        on left: 21 22
+        on right: 15 22
+    expr <exprData> (54)
+        on left: 23 24 25 26 27 28 30
+        on right: 9 14 16 24 25 26 27 28 30 31 32
+    $@3 (55)
+        on left: 29
+        on right: 30
+    print (56)
+        on left: 31 32
+        on right: 12
+    value <symbol> (57)
+        on left: 33 34 35 36
+        on right: 21 23
+
+
+State 0
+
+    0 $accept: . program $end
+
+    $default  reduce using rule 1 ($@1)
+
+    program  go to state 1
+    $@1      go to state 2
+
+
+State 1
+
+    0 $accept: program . $end
+
+    $end  shift, and go to state 3
+
+
+State 2
+
+    2 program: $@1 . main
+
+    FUN  shift, and go to state 4
+
+    main  go to state 5
+
+
+State 3
+
+    0 $accept: program $end .
+
+    $default  accept
+
+
+State 4
+
+    4 main: FUN . MAIN LEFT_PAREN RIGHT_PAREN LEFT_BRACE $@2 func RIGHT_BRACE
+
+    MAIN  shift, and go to state 6
+
+
+State 5
+
+    2 program: $@1 main .
+
+    $default  reduce using rule 2 (program)
+
+
+State 6
+
+    4 main: FUN MAIN . LEFT_PAREN RIGHT_PAREN LEFT_BRACE $@2 func RIGHT_BRACE
+
+    LEFT_PAREN  shift, and go to state 7
+
+
+State 7
+
+    4 main: FUN MAIN LEFT_PAREN . RIGHT_PAREN LEFT_BRACE $@2 func RIGHT_BRACE
+
+    RIGHT_PAREN  shift, and go to state 8
+
+
+State 8
+
+    4 main: FUN MAIN LEFT_PAREN RIGHT_PAREN . LEFT_BRACE $@2 func RIGHT_BRACE
+
+    LEFT_BRACE  shift, and go to state 9
+
+
+State 9
+
+    4 main: FUN MAIN LEFT_PAREN RIGHT_PAREN LEFT_BRACE . $@2 func RIGHT_BRACE
+
+    $default  reduce using rule 3 ($@2)
+
+    $@2  go to state 10
+
+
+State 10
+
+    4 main: FUN MAIN LEFT_PAREN RIGHT_PAREN LEFT_BRACE $@2 . func RIGHT_BRACE
+
+    PRINT       shift, and go to state 11
+    PRINTLN     shift, and go to state 12
+    VAR         shift, and go to state 13
+    MINUS       shift, and go to state 14
+    LEFT_PAREN  shift, and go to state 15
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 19
+
+    $default  reduce using rule 5 (func)
+
+    func        go to state 20
+    stmt_list   go to state 21
+    stmt        go to state 22
+    declare     go to state 23
+    assignment  go to state 24
+    expr        go to state 25
+    print       go to state 26
+    value       go to state 27
+
+
+State 11
+
+   31 print: PRINT . LEFT_PAREN expr RIGHT_PAREN
+
+    LEFT_PAREN  shift, and go to state 28
+
+
+State 12
+
+   32 print: PRINTLN . LEFT_PAREN expr RIGHT_PAREN
+
+    LEFT_PAREN  shift, and go to state 29
+
+
+State 13
+
+   13 declare: VAR . IDENTIFIER COLON type
+   14        | VAR . IDENTIFIER COLON type ASSIGN expr
+   15        | VAR . IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE
+
+    IDENTIFIER  shift, and go to state 30
+
+
+State 14
+
+   30 expr: MINUS . $@3 expr
+
+    $default  reduce using rule 29 ($@3)
+
+    $@3  go to state 31
+
+
+State 15
+
+   28 expr: LEFT_PAREN . expr RIGHT_PAREN
+
+    MINUS       shift, and go to state 14
+    LEFT_PAREN  shift, and go to state 15
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 32
+
+    expr   go to state 33
+    value  go to state 27
+
+
+State 16
+
+   34 value: INTEGER .
+
+    $default  reduce using rule 34 (value)
+
+
+State 17
+
+   33 value: REALNUMBER .
+
+    $default  reduce using rule 33 (value)
+
+
+State 18
+
+   35 value: STRING .
+
+    $default  reduce using rule 35 (value)
+
+
+State 19
+
+   16 assignment: IDENTIFIER . ASSIGN expr
+   36 value: IDENTIFIER .
+
+    ASSIGN  shift, and go to state 34
+
+    $default  reduce using rule 36 (value)
+
+
+State 20
+
+    4 main: FUN MAIN LEFT_PAREN RIGHT_PAREN LEFT_BRACE $@2 func . RIGHT_BRACE
+
+    RIGHT_BRACE  shift, and go to state 35
+
+
+State 21
+
+    6 func: stmt_list .
+    8 stmt_list: stmt_list . stmt SEMICOLON
+
+    PRINT       shift, and go to state 11
+    PRINTLN     shift, and go to state 12
+    VAR         shift, and go to state 13
+    MINUS       shift, and go to state 14
+    LEFT_PAREN  shift, and go to state 15
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 19
+
+    $default  reduce using rule 6 (func)
+
+    stmt        go to state 36
+    declare     go to state 23
+    assignment  go to state 24
+    expr        go to state 25
+    print       go to state 26
+    value       go to state 27
+
+
+State 22
+
+    7 stmt_list: stmt . SEMICOLON
+
+    SEMICOLON  shift, and go to state 37
+
+
+State 23
+
+   10 stmt: declare .
+
+    $default  reduce using rule 10 (stmt)
+
+
+State 24
+
+   11 stmt: assignment .
+
+    $default  reduce using rule 11 (stmt)
+
+
+State 25
+
+    9 stmt: expr .
+   24 expr: expr . PLUS expr
+   25     | expr . MINUS expr
+   26     | expr . ASTERISK expr
+   27     | expr . DIVIDE expr
+
+    PLUS      shift, and go to state 38
+    MINUS     shift, and go to state 39
+    ASTERISK  shift, and go to state 40
+    DIVIDE    shift, and go to state 41
+
+    $default  reduce using rule 9 (stmt)
+
+
+State 26
+
+   12 stmt: print .
+
+    $default  reduce using rule 12 (stmt)
+
+
+State 27
+
+   23 expr: value .
+
+    $default  reduce using rule 23 (expr)
+
+
+State 28
+
+   31 print: PRINT LEFT_PAREN . expr RIGHT_PAREN
+
+    MINUS       shift, and go to state 14
+    LEFT_PAREN  shift, and go to state 15
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 32
+
+    expr   go to state 42
+    value  go to state 27
+
+
+State 29
+
+   32 print: PRINTLN LEFT_PAREN . expr RIGHT_PAREN
+
+    MINUS       shift, and go to state 14
+    LEFT_PAREN  shift, and go to state 15
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 32
+
+    expr   go to state 43
+    value  go to state 27
+
+
+State 30
+
+   13 declare: VAR IDENTIFIER . COLON type
+   14        | VAR IDENTIFIER . COLON type ASSIGN expr
+   15        | VAR IDENTIFIER . COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE
+
+    COLON  shift, and go to state 44
+
+
+State 31
+
+   30 expr: MINUS $@3 . expr
+
+    MINUS       shift, and go to state 14
+    LEFT_PAREN  shift, and go to state 15
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 32
+
+    expr   go to state 45
+    value  go to state 27
+
+
+State 32
+
+   36 value: IDENTIFIER .
+
+    $default  reduce using rule 36 (value)
+
+
+State 33
+
+   24 expr: expr . PLUS expr
+   25     | expr . MINUS expr
+   26     | expr . ASTERISK expr
+   27     | expr . DIVIDE expr
+   28     | LEFT_PAREN expr . RIGHT_PAREN
+
+    PLUS         shift, and go to state 38
+    MINUS        shift, and go to state 39
+    ASTERISK     shift, and go to state 40
+    DIVIDE       shift, and go to state 41
+    RIGHT_PAREN  shift, and go to state 46
+
+
+State 34
+
+   16 assignment: IDENTIFIER ASSIGN . expr
+
+    MINUS       shift, and go to state 14
+    LEFT_PAREN  shift, and go to state 15
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 32
+
+    expr   go to state 47
+    value  go to state 27
+
+
+State 35
+
+    4 main: FUN MAIN LEFT_PAREN RIGHT_PAREN LEFT_BRACE $@2 func RIGHT_BRACE .
+
+    $default  reduce using rule 4 (main)
+
+
+State 36
+
+    8 stmt_list: stmt_list stmt . SEMICOLON
+
+    SEMICOLON  shift, and go to state 48
+
+
+State 37
+
+    7 stmt_list: stmt SEMICOLON .
+
+    $default  reduce using rule 7 (stmt_list)
+
+
+State 38
+
+   24 expr: expr PLUS . expr
+
+    MINUS       shift, and go to state 14
+    LEFT_PAREN  shift, and go to state 15
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 32
+
+    expr   go to state 49
+    value  go to state 27
+
+
+State 39
+
+   25 expr: expr MINUS . expr
+
+    MINUS       shift, and go to state 14
+    LEFT_PAREN  shift, and go to state 15
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 32
+
+    expr   go to state 50
+    value  go to state 27
+
+
+State 40
+
+   26 expr: expr ASTERISK . expr
+
+    MINUS       shift, and go to state 14
+    LEFT_PAREN  shift, and go to state 15
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 32
+
+    expr   go to state 51
+    value  go to state 27
+
+
+State 41
+
+   27 expr: expr DIVIDE . expr
+
+    MINUS       shift, and go to state 14
+    LEFT_PAREN  shift, and go to state 15
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 32
+
+    expr   go to state 52
+    value  go to state 27
+
+
+State 42
+
+   24 expr: expr . PLUS expr
+   25     | expr . MINUS expr
+   26     | expr . ASTERISK expr
+   27     | expr . DIVIDE expr
+   31 print: PRINT LEFT_PAREN expr . RIGHT_PAREN
+
+    PLUS         shift, and go to state 38
+    MINUS        shift, and go to state 39
+    ASTERISK     shift, and go to state 40
+    DIVIDE       shift, and go to state 41
+    RIGHT_PAREN  shift, and go to state 53
+
+
+State 43
+
+   24 expr: expr . PLUS expr
+   25     | expr . MINUS expr
+   26     | expr . ASTERISK expr
+   27     | expr . DIVIDE expr
+   32 print: PRINTLN LEFT_PAREN expr . RIGHT_PAREN
+
+    PLUS         shift, and go to state 38
+    MINUS        shift, and go to state 39
+    ASTERISK     shift, and go to state 40
+    DIVIDE       shift, and go to state 41
+    RIGHT_PAREN  shift, and go to state 54
+
+
+State 44
+
+   13 declare: VAR IDENTIFIER COLON . type
+   14        | VAR IDENTIFIER COLON . type ASSIGN expr
+   15        | VAR IDENTIFIER COLON . type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE
+
+    BOOL  shift, and go to state 55
+    CHAR  shift, and go to state 56
+    INT   shift, and go to state 57
+    REAL  shift, and go to state 58
+
+    type  go to state 59
+
+
+State 45
+
+   24 expr: expr . PLUS expr
+   25     | expr . MINUS expr
+   26     | expr . ASTERISK expr
+   27     | expr . DIVIDE expr
+   30     | MINUS $@3 expr .
+
+    $default  reduce using rule 30 (expr)
+
+
+State 46
+
+   28 expr: LEFT_PAREN expr RIGHT_PAREN .
+
+    $default  reduce using rule 28 (expr)
+
+
+State 47
+
+   16 assignment: IDENTIFIER ASSIGN expr .
+   24 expr: expr . PLUS expr
+   25     | expr . MINUS expr
+   26     | expr . ASTERISK expr
+   27     | expr . DIVIDE expr
+
+    PLUS      shift, and go to state 38
+    MINUS     shift, and go to state 39
+    ASTERISK  shift, and go to state 40
+    DIVIDE    shift, and go to state 41
+
+    $default  reduce using rule 16 (assignment)
+
+
+State 48
+
+    8 stmt_list: stmt_list stmt SEMICOLON .
+
+    $default  reduce using rule 8 (stmt_list)
+
+
+State 49
+
+   24 expr: expr . PLUS expr
+   24     | expr PLUS expr .
+   25     | expr . MINUS expr
+   26     | expr . ASTERISK expr
+   27     | expr . DIVIDE expr
+
+    ASTERISK  shift, and go to state 40
+    DIVIDE    shift, and go to state 41
+
+    $default  reduce using rule 24 (expr)
+
+
+State 50
+
+   24 expr: expr . PLUS expr
+   25     | expr . MINUS expr
+   25     | expr MINUS expr .
+   26     | expr . ASTERISK expr
+   27     | expr . DIVIDE expr
+
+    ASTERISK  shift, and go to state 40
+    DIVIDE    shift, and go to state 41
+
+    $default  reduce using rule 25 (expr)
+
+
+State 51
+
+   24 expr: expr . PLUS expr
+   25     | expr . MINUS expr
+   26     | expr . ASTERISK expr
+   26     | expr ASTERISK expr .
+   27     | expr . DIVIDE expr
+
+    $default  reduce using rule 26 (expr)
+
+
+State 52
+
+   24 expr: expr . PLUS expr
+   25     | expr . MINUS expr
+   26     | expr . ASTERISK expr
+   27     | expr . DIVIDE expr
+   27     | expr DIVIDE expr .
+
+    $default  reduce using rule 27 (expr)
+
+
+State 53
+
+   31 print: PRINT LEFT_PAREN expr RIGHT_PAREN .
+
+    $default  reduce using rule 31 (print)
+
+
+State 54
+
+   32 print: PRINTLN LEFT_PAREN expr RIGHT_PAREN .
+
+    $default  reduce using rule 32 (print)
+
+
+State 55
+
+   17 type: BOOL .
+
+    $default  reduce using rule 17 (type)
+
+
+State 56
+
+   18 type: CHAR .
+
+    $default  reduce using rule 18 (type)
+
+
+State 57
+
+   19 type: INT .
+
+    $default  reduce using rule 19 (type)
+
+
+State 58
+
+   20 type: REAL .
+
+    $default  reduce using rule 20 (type)
+
+
+State 59
+
+   13 declare: VAR IDENTIFIER COLON type .
+   14        | VAR IDENTIFIER COLON type . ASSIGN expr
+   15        | VAR IDENTIFIER COLON type . LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE
+
+    ASSIGN        shift, and go to state 60
+    LEFT_BRACKET  shift, and go to state 61
+
+    $default  reduce using rule 13 (declare)
+
+
+State 60
+
+   14 declare: VAR IDENTIFIER COLON type ASSIGN . expr
+
+    MINUS       shift, and go to state 14
+    LEFT_PAREN  shift, and go to state 15
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 32
+
+    expr   go to state 62
+    value  go to state 27
+
+
+State 61
+
+   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET . INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE
+
+    INTEGER  shift, and go to state 63
+
+
+State 62
+
+   14 declare: VAR IDENTIFIER COLON type ASSIGN expr .
+   24 expr: expr . PLUS expr
+   25     | expr . MINUS expr
+   26     | expr . ASTERISK expr
+   27     | expr . DIVIDE expr
+
+    PLUS      shift, and go to state 38
+    MINUS     shift, and go to state 39
+    ASTERISK  shift, and go to state 40
+    DIVIDE    shift, and go to state 41
+
+    $default  reduce using rule 14 (declare)
+
+
+State 63
+
+   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER . RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE
+
+    RIGHT_BRACKET  shift, and go to state 64
+
+
+State 64
+
+   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET . ASSIGN LEFT_BRACE array RIGHT_BRACE
+
+    ASSIGN  shift, and go to state 65
+
+
+State 65
+
+   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN . LEFT_BRACE array RIGHT_BRACE
+
+    LEFT_BRACE  shift, and go to state 66
+
+
+State 66
+
+   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE . array RIGHT_BRACE
+
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 32
+
+    array  go to state 67
+    value  go to state 68
+
+
+State 67
+
+   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array . RIGHT_BRACE
+   22 array: array . COMMA array
+
+    COMMA        shift, and go to state 69
+    RIGHT_BRACE  shift, and go to state 70
+
+
+State 68
+
+   21 array: value .
+
+    $default  reduce using rule 21 (array)
+
+
+State 69
+
+   22 array: array COMMA . array
+
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 32
+
+    array  go to state 71
+    value  go to state 68
+
+
+State 70
+
+   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE .
+
+    $default  reduce using rule 15 (declare)
+
+
+State 71
+
+   22 array: array . COMMA array
+   22      | array COMMA array .
+
+    COMMA  shift, and go to state 69
+
+    COMMA     [reduce using rule 22 (array)]
+    $default  reduce using rule 22 (array)

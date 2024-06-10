@@ -6,14 +6,17 @@ extern int yylex();
 extern int yyparse();
 
 #define MAX_SYMBOLS 512
+#define MAX_ARRAYS 512
 #define YYDEDUG 1
 
 Symbol symbolTable[MAX_SYMBOLS];
+ArrayData arrayTable[MAX_ARRAYS];
 int symbolCount = 0;
+int arrayCount = 0;
 
 int addSymbol(const char *name, SymbolType valueType) {
     if (symbolCount < MAX_SYMBOLS) {
-        strcpy(symbolTable[symbolCount].name, name);
+        symbolTable[symbolCount].name = strdup(name);
         symbolTable[symbolCount].type = valueType;
         symbolCount++;
         return 0; // success
@@ -25,6 +28,25 @@ Symbol* findSymbol(const char *name) {
     for (int i = 0; i < symbolCount; i++) {
         if (strcmp(symbolTable[i].name, name) == 0) {
             return &symbolTable[i];
+        }
+    }
+    return NULL; // not found
+}
+
+int addArray(const char *name, SymbolType valueType) {
+    if (symbolCount < MAX_SYMBOLS) {
+        arrayTable[symbolCount].name = strdup(name);
+        arrayTable[symbolCount].type = valueType;
+        arrayCount++;
+        return 0; // success
+    }
+    return -1; // array table full
+}
+
+ArrayData* findArray(const char *name) {
+    for (int i = 0; i < arrayCount; i++) {
+        if (strcmp(arrayTable[i].name, name) == 0) {
+            return &arrayTable[i];
         }
     }
     return NULL; // not found
@@ -58,6 +80,12 @@ void printSymbol(const Symbol *symbol)
     }
 }
 
+void copyExpr(ExprData *des, const ExprData *src)
+{
+    memcpy(des->symbols, src->symbols, src->symbolCount);
+    des->symbolCount = src->symbolCount;
+}
+
 void concatExpr(ExprData *result, const ExprData *lhs = nullptr, const ExprData *rhs = nullptr, const char *concatChar = nullptr)
 {
     result->symbolCount = 0;
@@ -74,7 +102,7 @@ void concatExpr(ExprData *result, const ExprData *lhs = nullptr, const ExprData 
     {
         Symbol charSymbol;
         charSymbol.isVar = 1;
-        strcpy(charSymbol.name, concatChar);
+        charSymbol.name = strdup(concatChar);
         result->symbols[result->symbolCount] = charSymbol;
         result->symbolCount++;
     }
@@ -100,6 +128,7 @@ void concatExpr(ExprData *result, const ExprData *lhs = nullptr, const ExprData 
     char*           strVal;
     SymbolType      symbolType;
     ExprData        exprData;
+    ArrayData       arrData;
 }
 
 %token FUN MAIN PRINT PRINTLN CLASS RET
@@ -116,6 +145,7 @@ void concatExpr(ExprData *result, const ExprData *lhs = nullptr, const ExprData 
 %type <symbol> value assignment
 %type <symbolType> type
 %type <exprData> expr
+%type <arrData> array
 
 
 %left PLUS MINUS
@@ -143,8 +173,8 @@ stmt_list:
     ;
 
 stmt:
-      expr                              
-    | declare 
+      expr            
+    | declare
     | assignment 
     | print
     ;
@@ -152,21 +182,31 @@ stmt:
 declare:
       VAR IDENTIFIER COLON type                 { addSymbol($2, $4); fprintf(yyout, " %s", $2); }
     | VAR IDENTIFIER COLON type ASSIGN expr     { 
-                                                    addSymbol($2, $4); 
+                                                    addSymbol($2, $4);
                                                     fprintf(yyout, " %s = ", $2); 
                                                     for (int i = 0; i < $6.symbolCount; i++) {
                                                         const Symbol* symbol = &($6.symbols[i]);
                                                         printSymbol(symbol); 
                                                     }
                                                 } 
+    | VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE      { 
+                                                                                                                addArray($2, $4); 
+                                                                                                                fprintf(yyout, " %s[%d] = {", $2, $6);
+                                                                                                                ArrayData* arr = findArray($2); 
+                                                                                                                memcpy(arr->value, $10.value, $10.count);
+                                                                                                                arr->count = $10.count;
+                                                                                                                for(int i=0;i<$10.count;i++){
+                                                                                                                    Symbol* symbol = &($10.value[i]);
+                                                                                                                    printSymbol(symbol);
+                                                                                                                    if(i != $10.count - 1){
+                                                                                                                        fprintf(yyout, ", ");
+                                                                                                                    }
+                                                                                                                }
+                                                                                                                fprintf(yyout, "}");
+
+                                                                                                            }
     ;
 
-type:
-      BOOL                              { $$ = TYPE_BOOL; fprintf(yyout, "int");}
-    | CHAR                              { $$ = TYPE_CHAR; fprintf(yyout, "char");}
-    | INT                               { $$ = TYPE_INT; fprintf(yyout, "int");}
-    | REAL                              { $$ = TYPE_REAL; fprintf(yyout, "float");}
-    ;
 
 assignment:
       IDENTIFIER ASSIGN expr    { 
@@ -185,6 +225,21 @@ assignment:
                                 }        
     ;
 
+type:
+      BOOL                              { $$ = TYPE_BOOL; fprintf(yyout, "int");}
+    | CHAR                              { $$ = TYPE_CHAR; fprintf(yyout, "char");}
+    | INT                               { $$ = TYPE_INT; fprintf(yyout, "int");}
+    | REAL                              { $$ = TYPE_REAL; fprintf(yyout, "float");}
+    ;
+
+array:
+      value                             { $$.count = 1; $$.value[0] = $1; }                                                 
+    | array COMMA value                 { 
+                                            memcpy($$.value, $1.value, $1.count);
+                                            $$.value[$1.count] = $3;
+                                            $$.count = $1.count + 1;
+                                        }
+
 expr:
       value                                                         { $$.symbols[0] = $1; $$.symbolCount = 1; }                              
     | expr PLUS expr                                                { concatExpr(&($$), &($1), &($3), "+"); }
@@ -196,7 +251,7 @@ expr:
                                                                         ExprData temp = $$;
                                                                         concatExpr(&($$), &(temp), nullptr, ")");
                                                                     }
-    | MINUS { fprintf(yyout, "-"); } expr %prec UMINUS              { $$ = $3; }
+    | MINUS expr %prec UMINUS                                       { concatExpr(&($$), nullptr, &($2), "-"); }
     ;
 
 print:
@@ -274,12 +329,15 @@ value:
                                             Symbol *s = findSymbol($1);
                                             if (s) {
                                                 $$.type = s->type;
-                                                strcpy($$.name, s->name);
+                                                $$.name = strdup(s->name);
                                                 $$.isVar = 1;
                                             } else {
                                                 yyerror("Error: undeclared variable" );
                                             } 
-                                        } 
+                                        }  
+    | MINUS REALNUMBER %prec UMINUS     { $$.type = TYPE_REAL; $$.value.realNum = -$2; $$.isVar = 0; }
+    | MINUS INTEGER %prec UMINUS        { $$.type = TYPE_INT; $$.value.intNum = -$2; $$.isVar = 0; }
+    
     ;
 
 %%

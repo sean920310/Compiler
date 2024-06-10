@@ -85,8 +85,8 @@ WRONG_IDENTIFIER    {DIGIT}+{IDENTIFIER}
 
 "("                 { printf("<LEFT_PAREN>"); return LEFT_PAREN; }
 ")"                 { printf("<RIGHT_PAREN>"); return RIGHT_PAREN; }
-"["                 { printf("<LEFT_BRACKET>"); }
-"]"                 { printf("<RIGHT_BRACKET>"); }
+"["                 { printf("<LEFT_BRACKET>"); return LEFT_BRACKET;}
+"]"                 { printf("<RIGHT_BRACKET>"); return RIGHT_BRACKET;}
 "{"                 { printf("<LEFT_BRACE>"); return LEFT_BRACE; }
 "}"                 { printf("<RIGHT_BRACE>"); return RIGHT_BRACE; }
 
