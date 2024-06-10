@@ -11,6 +11,7 @@ extern FILE *yyout;
 
 typedef enum
 {
+    NONE,
     TYPE_INT,
     TYPE_REAL,
     TYPE_BOOL,
