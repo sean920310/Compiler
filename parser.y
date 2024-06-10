@@ -150,7 +150,7 @@ void concatExpr(ExprData *result, const ExprData *lhs = nullptr, const ExprData 
 
 %left PLUS MINUS
 %left ASTERISK DIVIDE
-%right UMINUS
+%nonassoc UMINUS
 
 %%
 
@@ -251,7 +251,6 @@ expr:
                                                                         ExprData temp = $$;
                                                                         concatExpr(&($$), &(temp), nullptr, ")");
                                                                     }
-    | MINUS expr %prec UMINUS                                       { concatExpr(&($$), nullptr, &($2), "-"); }
     ;
 
 print:
@@ -335,9 +334,19 @@ value:
                                                 yyerror("Error: undeclared variable" );
                                             } 
                                         }  
-    | MINUS REALNUMBER %prec UMINUS     { $$.type = TYPE_REAL; $$.value.realNum = -$2; $$.isVar = 0; }
-    | MINUS INTEGER %prec UMINUS        { $$.type = TYPE_INT; $$.value.intNum = -$2; $$.isVar = 0; }
-    
+    | MINUS value %prec UMINUS          { 
+
+                                            $$ = $2;
+                                            switch ($2.type)
+                                            {
+                                            case TYPE_INT:
+                                                $$.value.intNum = -$2.value.intNum;
+                                                break;
+                                            case TYPE_REAL:
+                                                $$.value.realNum = -$2.value.realNum;
+                                                break;
+                                            }
+                                        }
     ;
 
 %%

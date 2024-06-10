@@ -13,9 +13,6 @@ Terminals unused in grammar
     LESS_EQUAL
 
 
-State 71 conflicts: 1 shift/reduce
-
-
 Grammar
 
     0 $accept: program $end
@@ -51,7 +48,7 @@ Grammar
    20     | REAL
 
    21 array: value
-   22      | array COMMA array
+   22      | array COMMA value
 
    23 expr: value
    24     | expr PLUS expr
@@ -60,17 +57,14 @@ Grammar
    27     | expr DIVIDE expr
    28     | LEFT_PAREN expr RIGHT_PAREN
 
-   29 $@3: %empty
+   29 print: PRINT LEFT_PAREN expr RIGHT_PAREN
+   30      | PRINTLN LEFT_PAREN expr RIGHT_PAREN
 
-   30 expr: MINUS $@3 expr
-
-   31 print: PRINT LEFT_PAREN expr RIGHT_PAREN
-   32      | PRINTLN LEFT_PAREN expr RIGHT_PAREN
-
-   33 value: REALNUMBER
-   34      | INTEGER
-   35      | STRING
-   36      | IDENTIFIER
+   31 value: REALNUMBER
+   32      | INTEGER
+   33      | STRING
+   34      | IDENTIFIER
+   35      | MINUS value
 
 
 Terminals, with rules where they appear
@@ -79,8 +73,8 @@ Terminals, with rules where they appear
     error (256)
     FUN (258) 4
     MAIN (259) 4
-    PRINT (260) 31
-    PRINTLN (261) 32
+    PRINT (260) 29
+    PRINTLN (261) 30
     CLASS (262)
     RET (263)
     VAR (264) 13 14 15
@@ -92,7 +86,7 @@ Terminals, with rules where they appear
     B_TRUE (270)
     B_FALSE (271)
     PLUS (272) 24
-    MINUS (273) 25 30
+    MINUS (273) 25 35
     ASTERISK (274) 26
     DIVIDE (275) 27
     ASSIGN (276) 14 15 16
@@ -105,16 +99,16 @@ Terminals, with rules where they appear
     COMMA (283) 22
     SEMICOLON (284) 7 8
     COLON (285) 13 14 15
-    LEFT_PAREN (286) 4 28 31 32
-    RIGHT_PAREN (287) 4 28 31 32
+    LEFT_PAREN (286) 4 28 29 30
+    RIGHT_PAREN (287) 4 28 29 30
     LEFT_BRACKET (288) 15
     RIGHT_BRACKET (289) 15
     LEFT_BRACE (290) 4 15
     RIGHT_BRACE (291) 4 15
-    INTEGER <intNum> (292) 15 34
-    REALNUMBER <realNum> (293) 33
-    STRING <strVal> (294) 35
-    IDENTIFIER <strVal> (295) 13 14 15 16 36
+    INTEGER <intNum> (292) 15 32
+    REALNUMBER <realNum> (293) 31
+    STRING <strVal> (294) 33
+    IDENTIFIER <strVal> (295) 13 14 15 16 34
     UMINUS (296)
 
 
@@ -156,17 +150,14 @@ Nonterminals, with rules where they appear
         on left: 21 22
         on right: 15 22
     expr <exprData> (54)
-        on left: 23 24 25 26 27 28 30
-        on right: 9 14 16 24 25 26 27 28 30 31 32
-    $@3 (55)
-        on left: 29
-        on right: 30
-    print (56)
-        on left: 31 32
+        on left: 23 24 25 26 27 28
+        on right: 9 14 16 24 25 26 27 28 29 30
+    print (55)
+        on left: 29 30
         on right: 12
-    value <symbol> (57)
-        on left: 33 34 35 36
-        on right: 21 23
+    value <symbol> (56)
+        on left: 31 32 33 34 35
+        on right: 21 22 23 35
 
 
 State 0
@@ -274,14 +265,14 @@ State 10
 
 State 11
 
-   31 print: PRINT . LEFT_PAREN expr RIGHT_PAREN
+   29 print: PRINT . LEFT_PAREN expr RIGHT_PAREN
 
     LEFT_PAREN  shift, and go to state 28
 
 
 State 12
 
-   32 print: PRINTLN . LEFT_PAREN expr RIGHT_PAREN
+   30 print: PRINTLN . LEFT_PAREN expr RIGHT_PAREN
 
     LEFT_PAREN  shift, and go to state 29
 
@@ -297,11 +288,15 @@ State 13
 
 State 14
 
-   30 expr: MINUS . $@3 expr
+   35 value: MINUS . value
 
-    $default  reduce using rule 29 ($@3)
+    MINUS       shift, and go to state 14
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 31
 
-    $@3  go to state 31
+    value  go to state 32
 
 
 State 15
@@ -313,7 +308,7 @@ State 15
     INTEGER     shift, and go to state 16
     REALNUMBER  shift, and go to state 17
     STRING      shift, and go to state 18
-    IDENTIFIER  shift, and go to state 32
+    IDENTIFIER  shift, and go to state 31
 
     expr   go to state 33
     value  go to state 27
@@ -321,33 +316,33 @@ State 15
 
 State 16
 
-   34 value: INTEGER .
+   32 value: INTEGER .
 
-    $default  reduce using rule 34 (value)
+    $default  reduce using rule 32 (value)
 
 
 State 17
 
-   33 value: REALNUMBER .
+   31 value: REALNUMBER .
 
-    $default  reduce using rule 33 (value)
+    $default  reduce using rule 31 (value)
 
 
 State 18
 
-   35 value: STRING .
+   33 value: STRING .
 
-    $default  reduce using rule 35 (value)
+    $default  reduce using rule 33 (value)
 
 
 State 19
 
    16 assignment: IDENTIFIER . ASSIGN expr
-   36 value: IDENTIFIER .
+   34 value: IDENTIFIER .
 
     ASSIGN  shift, and go to state 34
 
-    $default  reduce using rule 36 (value)
+    $default  reduce using rule 34 (value)
 
 
 State 20
@@ -435,14 +430,14 @@ State 27
 
 State 28
 
-   31 print: PRINT LEFT_PAREN . expr RIGHT_PAREN
+   29 print: PRINT LEFT_PAREN . expr RIGHT_PAREN
 
     MINUS       shift, and go to state 14
     LEFT_PAREN  shift, and go to state 15
     INTEGER     shift, and go to state 16
     REALNUMBER  shift, and go to state 17
     STRING      shift, and go to state 18
-    IDENTIFIER  shift, and go to state 32
+    IDENTIFIER  shift, and go to state 31
 
     expr   go to state 42
     value  go to state 27
@@ -450,14 +445,14 @@ State 28
 
 State 29
 
-   32 print: PRINTLN LEFT_PAREN . expr RIGHT_PAREN
+   30 print: PRINTLN LEFT_PAREN . expr RIGHT_PAREN
 
     MINUS       shift, and go to state 14
     LEFT_PAREN  shift, and go to state 15
     INTEGER     shift, and go to state 16
     REALNUMBER  shift, and go to state 17
     STRING      shift, and go to state 18
-    IDENTIFIER  shift, and go to state 32
+    IDENTIFIER  shift, and go to state 31
 
     expr   go to state 43
     value  go to state 27
@@ -474,24 +469,16 @@ State 30
 
 State 31
 
-   30 expr: MINUS $@3 . expr
+   34 value: IDENTIFIER .
 
-    MINUS       shift, and go to state 14
-    LEFT_PAREN  shift, and go to state 15
-    INTEGER     shift, and go to state 16
-    REALNUMBER  shift, and go to state 17
-    STRING      shift, and go to state 18
-    IDENTIFIER  shift, and go to state 32
-
-    expr   go to state 45
-    value  go to state 27
+    $default  reduce using rule 34 (value)
 
 
 State 32
 
-   36 value: IDENTIFIER .
+   35 value: MINUS value .
 
-    $default  reduce using rule 36 (value)
+    $default  reduce using rule 35 (value)
 
 
 State 33
@@ -506,7 +493,7 @@ State 33
     MINUS        shift, and go to state 39
     ASTERISK     shift, and go to state 40
     DIVIDE       shift, and go to state 41
-    RIGHT_PAREN  shift, and go to state 46
+    RIGHT_PAREN  shift, and go to state 45
 
 
 State 34
@@ -518,9 +505,9 @@ State 34
     INTEGER     shift, and go to state 16
     REALNUMBER  shift, and go to state 17
     STRING      shift, and go to state 18
-    IDENTIFIER  shift, and go to state 32
+    IDENTIFIER  shift, and go to state 31
 
-    expr   go to state 47
+    expr   go to state 46
     value  go to state 27
 
 
@@ -535,7 +522,7 @@ State 36
 
     8 stmt_list: stmt_list stmt . SEMICOLON
 
-    SEMICOLON  shift, and go to state 48
+    SEMICOLON  shift, and go to state 47
 
 
 State 37
@@ -554,9 +541,9 @@ State 38
     INTEGER     shift, and go to state 16
     REALNUMBER  shift, and go to state 17
     STRING      shift, and go to state 18
-    IDENTIFIER  shift, and go to state 32
+    IDENTIFIER  shift, and go to state 31
 
-    expr   go to state 49
+    expr   go to state 48
     value  go to state 27
 
 
@@ -569,9 +556,9 @@ State 39
     INTEGER     shift, and go to state 16
     REALNUMBER  shift, and go to state 17
     STRING      shift, and go to state 18
-    IDENTIFIER  shift, and go to state 32
+    IDENTIFIER  shift, and go to state 31
 
-    expr   go to state 50
+    expr   go to state 49
     value  go to state 27
 
 
@@ -584,9 +571,9 @@ State 40
     INTEGER     shift, and go to state 16
     REALNUMBER  shift, and go to state 17
     STRING      shift, and go to state 18
-    IDENTIFIER  shift, and go to state 32
+    IDENTIFIER  shift, and go to state 31
 
-    expr   go to state 51
+    expr   go to state 50
     value  go to state 27
 
 
@@ -599,9 +586,9 @@ State 41
     INTEGER     shift, and go to state 16
     REALNUMBER  shift, and go to state 17
     STRING      shift, and go to state 18
-    IDENTIFIER  shift, and go to state 32
+    IDENTIFIER  shift, and go to state 31
 
-    expr   go to state 52
+    expr   go to state 51
     value  go to state 27
 
 
@@ -611,13 +598,13 @@ State 42
    25     | expr . MINUS expr
    26     | expr . ASTERISK expr
    27     | expr . DIVIDE expr
-   31 print: PRINT LEFT_PAREN expr . RIGHT_PAREN
+   29 print: PRINT LEFT_PAREN expr . RIGHT_PAREN
 
     PLUS         shift, and go to state 38
     MINUS        shift, and go to state 39
     ASTERISK     shift, and go to state 40
     DIVIDE       shift, and go to state 41
-    RIGHT_PAREN  shift, and go to state 53
+    RIGHT_PAREN  shift, and go to state 52
 
 
 State 43
@@ -626,13 +613,13 @@ State 43
    25     | expr . MINUS expr
    26     | expr . ASTERISK expr
    27     | expr . DIVIDE expr
-   32 print: PRINTLN LEFT_PAREN expr . RIGHT_PAREN
+   30 print: PRINTLN LEFT_PAREN expr . RIGHT_PAREN
 
     PLUS         shift, and go to state 38
     MINUS        shift, and go to state 39
     ASTERISK     shift, and go to state 40
     DIVIDE       shift, and go to state 41
-    RIGHT_PAREN  shift, and go to state 54
+    RIGHT_PAREN  shift, and go to state 53
 
 
 State 44
@@ -641,33 +628,22 @@ State 44
    14        | VAR IDENTIFIER COLON . type ASSIGN expr
    15        | VAR IDENTIFIER COLON . type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE
 
-    BOOL  shift, and go to state 55
-    CHAR  shift, and go to state 56
-    INT   shift, and go to state 57
-    REAL  shift, and go to state 58
+    BOOL  shift, and go to state 54
+    CHAR  shift, and go to state 55
+    INT   shift, and go to state 56
+    REAL  shift, and go to state 57
 
-    type  go to state 59
+    type  go to state 58
 
 
 State 45
-
-   24 expr: expr . PLUS expr
-   25     | expr . MINUS expr
-   26     | expr . ASTERISK expr
-   27     | expr . DIVIDE expr
-   30     | MINUS $@3 expr .
-
-    $default  reduce using rule 30 (expr)
-
-
-State 46
 
    28 expr: LEFT_PAREN expr RIGHT_PAREN .
 
     $default  reduce using rule 28 (expr)
 
 
-State 47
+State 46
 
    16 assignment: IDENTIFIER ASSIGN expr .
    24 expr: expr . PLUS expr
@@ -683,14 +659,14 @@ State 47
     $default  reduce using rule 16 (assignment)
 
 
-State 48
+State 47
 
     8 stmt_list: stmt_list stmt SEMICOLON .
 
     $default  reduce using rule 8 (stmt_list)
 
 
-State 49
+State 48
 
    24 expr: expr . PLUS expr
    24     | expr PLUS expr .
@@ -704,7 +680,7 @@ State 49
     $default  reduce using rule 24 (expr)
 
 
-State 50
+State 49
 
    24 expr: expr . PLUS expr
    25     | expr . MINUS expr
@@ -718,7 +694,7 @@ State 50
     $default  reduce using rule 25 (expr)
 
 
-State 51
+State 50
 
    24 expr: expr . PLUS expr
    25     | expr . MINUS expr
@@ -729,7 +705,7 @@ State 51
     $default  reduce using rule 26 (expr)
 
 
-State 52
+State 51
 
    24 expr: expr . PLUS expr
    25     | expr . MINUS expr
@@ -740,61 +716,61 @@ State 52
     $default  reduce using rule 27 (expr)
 
 
+State 52
+
+   29 print: PRINT LEFT_PAREN expr RIGHT_PAREN .
+
+    $default  reduce using rule 29 (print)
+
+
 State 53
 
-   31 print: PRINT LEFT_PAREN expr RIGHT_PAREN .
+   30 print: PRINTLN LEFT_PAREN expr RIGHT_PAREN .
 
-    $default  reduce using rule 31 (print)
+    $default  reduce using rule 30 (print)
 
 
 State 54
-
-   32 print: PRINTLN LEFT_PAREN expr RIGHT_PAREN .
-
-    $default  reduce using rule 32 (print)
-
-
-State 55
 
    17 type: BOOL .
 
     $default  reduce using rule 17 (type)
 
 
-State 56
+State 55
 
    18 type: CHAR .
 
     $default  reduce using rule 18 (type)
 
 
-State 57
+State 56
 
    19 type: INT .
 
     $default  reduce using rule 19 (type)
 
 
-State 58
+State 57
 
    20 type: REAL .
 
     $default  reduce using rule 20 (type)
 
 
-State 59
+State 58
 
    13 declare: VAR IDENTIFIER COLON type .
    14        | VAR IDENTIFIER COLON type . ASSIGN expr
    15        | VAR IDENTIFIER COLON type . LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE
 
-    ASSIGN        shift, and go to state 60
-    LEFT_BRACKET  shift, and go to state 61
+    ASSIGN        shift, and go to state 59
+    LEFT_BRACKET  shift, and go to state 60
 
     $default  reduce using rule 13 (declare)
 
 
-State 60
+State 59
 
    14 declare: VAR IDENTIFIER COLON type ASSIGN . expr
 
@@ -803,20 +779,20 @@ State 60
     INTEGER     shift, and go to state 16
     REALNUMBER  shift, and go to state 17
     STRING      shift, and go to state 18
-    IDENTIFIER  shift, and go to state 32
+    IDENTIFIER  shift, and go to state 31
 
-    expr   go to state 62
+    expr   go to state 61
     value  go to state 27
 
 
-State 61
+State 60
 
    15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET . INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE
 
-    INTEGER  shift, and go to state 63
+    INTEGER  shift, and go to state 62
 
 
-State 62
+State 61
 
    14 declare: VAR IDENTIFIER COLON type ASSIGN expr .
    24 expr: expr . PLUS expr
@@ -832,82 +808,79 @@ State 62
     $default  reduce using rule 14 (declare)
 
 
-State 63
+State 62
 
    15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER . RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE
 
-    RIGHT_BRACKET  shift, and go to state 64
+    RIGHT_BRACKET  shift, and go to state 63
+
+
+State 63
+
+   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET . ASSIGN LEFT_BRACE array RIGHT_BRACE
+
+    ASSIGN  shift, and go to state 64
 
 
 State 64
 
-   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET . ASSIGN LEFT_BRACE array RIGHT_BRACE
+   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN . LEFT_BRACE array RIGHT_BRACE
 
-    ASSIGN  shift, and go to state 65
+    LEFT_BRACE  shift, and go to state 65
 
 
 State 65
 
-   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN . LEFT_BRACE array RIGHT_BRACE
+   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE . array RIGHT_BRACE
 
-    LEFT_BRACE  shift, and go to state 66
+    MINUS       shift, and go to state 14
+    INTEGER     shift, and go to state 16
+    REALNUMBER  shift, and go to state 17
+    STRING      shift, and go to state 18
+    IDENTIFIER  shift, and go to state 31
+
+    array  go to state 66
+    value  go to state 67
 
 
 State 66
 
-   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE . array RIGHT_BRACE
+   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array . RIGHT_BRACE
+   22 array: array . COMMA value
 
-    INTEGER     shift, and go to state 16
-    REALNUMBER  shift, and go to state 17
-    STRING      shift, and go to state 18
-    IDENTIFIER  shift, and go to state 32
-
-    array  go to state 67
-    value  go to state 68
+    COMMA        shift, and go to state 68
+    RIGHT_BRACE  shift, and go to state 69
 
 
 State 67
-
-   15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array . RIGHT_BRACE
-   22 array: array . COMMA array
-
-    COMMA        shift, and go to state 69
-    RIGHT_BRACE  shift, and go to state 70
-
-
-State 68
 
    21 array: value .
 
     $default  reduce using rule 21 (array)
 
 
-State 69
+State 68
 
-   22 array: array COMMA . array
+   22 array: array COMMA . value
 
+    MINUS       shift, and go to state 14
     INTEGER     shift, and go to state 16
     REALNUMBER  shift, and go to state 17
     STRING      shift, and go to state 18
-    IDENTIFIER  shift, and go to state 32
+    IDENTIFIER  shift, and go to state 31
 
-    array  go to state 71
-    value  go to state 68
+    value  go to state 70
 
 
-State 70
+State 69
 
    15 declare: VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE .
 
     $default  reduce using rule 15 (declare)
 
 
-State 71
+State 70
 
-   22 array: array . COMMA array
-   22      | array COMMA array .
+   22 array: array COMMA value .
 
-    COMMA  shift, and go to state 69
-
-    COMMA     [reduce using rule 22 (array)]
     $default  reduce using rule 22 (array)
