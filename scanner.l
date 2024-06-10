@@ -22,7 +22,7 @@ WRONG_IDENTIFIER    {DIGIT}+{IDENTIFIER}
 %%
 
 \/\/                { BEGIN COMMENT; }
-<COMMENT>\n         { BEGIN 0; ECHO; lineNum++; }
+<COMMENT>\n         { BEGIN 0; printf("\n"); lineNum++; }
 <COMMENT>.          { ; }
 
 \"                  { BEGIN STRING; }
@@ -84,7 +84,7 @@ WRONG_IDENTIFIER    {DIGIT}+{IDENTIFIER}
 "{"                 { printf("<LEFT_BRACE>"); return LEFT_BRACE; }
 "}"                 { printf("<RIGHT_BRACE>"); return RIGHT_BRACE; }
 
-\n                  { lineNum++; ECHO;}
+\n                  { lineNum++; printf("\n");}
 \'\\{ESCAPE_SEQ}\'  { printf("<ESCAPE_SEQ>"); }
 \'.\'               { printf("<CHARACTER>"); }
 {WRONG_IDENTIFIER}  { yyerror("Wrong identifier name"); yyterminate();}
@@ -92,8 +92,8 @@ WRONG_IDENTIFIER    {DIGIT}+{IDENTIFIER}
 {INT}               { printf("<INTEGER>"); sscanf(yytext, "%d", &(yylval.intNum)); return INTEGER; }
 {REAL}              { printf("<REALNUMBER>"); sscanf(yytext, "%f", &(yylval.realNum)); return REALNUMBER; }
 
-[ ]                 { ECHO; }
-\t                  { ECHO; }
+[ ]                 { printf(" "); }
+\t                  { printf("\t"); }
 
 .                   { yyerror("Unexpected character"); yyterminate();}
 

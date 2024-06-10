@@ -4,11 +4,15 @@
 void yyerror(const char *s);
 extern int yylex();
 extern int yyparse();
+extern FILE *yyout;
 
-#define MAX_SYMBOLS 256
+#define MAX_SYMBOLS 1024
+
+typedef enum { TYPE_INT, TYPE_REAL, TYPE_BOOL, TYPE_STRING } SymbolType;
 
 typedef struct {
-    char name[32];
+    char name[1024];
+    SymbolType type;
     float value;
 } Symbol;
 
@@ -39,7 +43,9 @@ Symbol* findSymbol(const char *name) {
 %union {
     int     intNum;
     float   realNum;
-    char*  id;
+    char    charVal;
+    int     boolVal;
+    char*   id;
 }
 
 %token FUN MAIN PRINT CLASS RET
@@ -61,11 +67,11 @@ Symbol* findSymbol(const char *name) {
 %%
 
 program:
-      main
+      { fprintf(yyout, "#include <stdio.h>\n#include <stdlib.h>\n"); } main
     ;
     
 main:
-      FUN MAIN LEFT_PAREN RIGHT_PAREN LEFT_BRACE func RIGHT_BRACE { printf("\nend!!!\n"); }
+      FUN MAIN LEFT_PAREN RIGHT_PAREN LEFT_BRACE { fprintf(yyout, "int main() {\n"); } func RIGHT_BRACE { fprintf(yyout, "}"); } 
     ;
 
 func:
@@ -74,52 +80,56 @@ func:
     ;
 
 stmt_list:
-      stmt SEMICOLON
-    | stmt_list stmt SEMICOLON
+      stmt SEMICOLON                    { fprintf(yyout, ";\n"); }
+    | stmt_list stmt SEMICOLON          { fprintf(yyout, ";\n"); }
     ;
 
 stmt:
       expr                              { printf("Result: %f\n", $1); }
     | declare 
     | assignment 
+    | print
     ;
 
 declare:
-      VAR IDENTIFIER COLON type         { addSymbol($2, 0); printf("Declared variable %s\n", $2); }
+      VAR IDENTIFIER COLON type         { addSymbol($2, 0); fprintf(yyout, " %s", $2); }
+    | VAR IDENTIFIER COLON type ASSIGN  { addSymbol($2, 0); fprintf(yyout, " %s = ", $2); } expr
     ;
 
 type:
-      BOOL
-    | CHAR
-    | INT
-    | REAL
+      BOOL                              { fprintf(yyout, "int");}
+    | CHAR                              { fprintf(yyout, "char");}
+    | INT                               { fprintf(yyout, "int");}
+    | REAL                              { fprintf(yyout, "float");}
     ;
 
 assignment:
-      IDENTIFIER ASSIGN expr            { 
-                                            Symbol *s = findSymbol($1);
-                                                if (s) {
-                                                    s->value = $3;
-                                                    $$ = $3;
-                                                } else {
-                                                    yyerror("Error: undeclared variable" );
-                                                } 
-                                        }        
+      IDENTIFIER ASSIGN { fprintf(yyout, "%s = ", $1); } expr       { 
+                                                                        Symbol *s = findSymbol($1);
+                                                                            if (s) {
+                                                                                s->value = $4;
+                                                                                $$ = $4;
+                                                                            } else {
+                                                                                yyerror("Error: undeclared variable" );
+                                                                            } 
+                                                                    }        
     ;
 
 expr:
-      value                             { $$ = $1; }
-    | expr PLUS expr                    { $$ = $1 + $3; }
-    | expr MINUS expr                   { $$ = $1 - $3; }
-    | expr ASTERISK expr                { $$ = $1 * $3; }
-    | expr DIVIDE expr                  { $$ = $1 / $3; }
-    | MINUS expr %prec UMINUS           { $$ = -$2; }
-    | PRINT LEFT_PAREN expr RIGHT_PAREN { printf("%f", $3);}
+      value                                                                     { $$ = $1; }
+    | expr PLUS { fprintf(yyout, "+"); } expr                                   { $$ = $1 + $4; }
+    | expr MINUS { fprintf(yyout, "-"); } expr                                  { $$ = $1 - $4; }
+    | expr ASTERISK { fprintf(yyout, "*"); } expr                               { $$ = $1 * $4; }
+    | expr DIVIDE { fprintf(yyout, "/"); } expr                                 { $$ = $1 / $4; }
+    | MINUS { fprintf(yyout, "-"); } expr %prec UMINUS                          { $$ = -$3; }
     ;
 
+print:
+    | PRINT LEFT_PAREN { fprintf(yyout, "printf(\"%%f\", "); } expr RIGHT_PAREN { printf("%f", $4); fprintf(yyout, ")"); }
+
 value:
-      REALNUMBER                        { $$ = $1; }
-    | INTEGER                           { $$ = (float)$1; }
+      REALNUMBER                        { $$ = $1; fprintf(yyout, "%f", $1); }
+    | INTEGER                           { $$ = (float)$1; fprintf(yyout, "%d", $1); }
     | IDENTIFIER                        { 
                                             Symbol *s = findSymbol($1);
                                                 if (s) {
@@ -127,6 +137,7 @@ value:
                                                 } else {
                                                     yyerror("Error: undeclared variable" );
                                                 } 
+                                            fprintf(yyout, "%s", s->name);
                                         } 
     ;
 

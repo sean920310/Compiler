@@ -5,3 +5,5 @@
 /parser.tab.c
 /parser.tab.h
 /yacc.y
+/output.c
+/output
