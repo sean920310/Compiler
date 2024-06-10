@@ -14,7 +14,8 @@ typedef enum
     TYPE_INT,
     TYPE_REAL,
     TYPE_BOOL,
-    TYPE_CHAR
+    TYPE_CHAR,
+    TYPE_STRING
 } SymbolType;
 
 typedef union
@@ -23,7 +24,7 @@ typedef union
     float realNum;
     char charVal;
     int boolVal;
-    char *id;
+    char *strVal;
 } SymbolValue;
 
 typedef struct

@@ -5,8 +5,8 @@ void yyerror(const char *s);
 extern int yylex();
 extern int yyparse();
 
-#define MAX_SYMBOLS 1024
-
+#define MAX_SYMBOLS 512
+#define YYDEDUG 1
 
 Symbol symbolTable[MAX_SYMBOLS];
 int symbolCount = 0;
@@ -51,6 +51,9 @@ void printSymbol(const Symbol *symbol)
         case TYPE_CHAR:
             fprintf(yyout, "%c", symbol->value.charVal);
             break;
+        case TYPE_STRING:
+            fprintf(yyout, "%s", symbol->value.strVal);
+            break;
         }
     }
 }
@@ -94,12 +97,12 @@ void concatExpr(ExprData *result, const ExprData *lhs = nullptr, const ExprData 
     float           realNum;
     char            charVal;
     int             boolVal;
-    char*           id;
+    char*           strVal;
     SymbolType      symbolType;
     ExprData        exprData;
 }
 
-%token FUN MAIN PRINT CLASS RET
+%token FUN MAIN PRINT PRINTLN CLASS RET
 %token VAR VAL BOOL CHAR INT REAL B_TRUE B_FALSE
 %token PLUS MINUS ASTERISK DIVIDE
 %token ASSIGN EQUAL INEQUAL GREATER LESS GREATER_EQUAL LESS_EQUAL COMMA SEMICOLON COLON
@@ -107,7 +110,8 @@ void concatExpr(ExprData *result, const ExprData *lhs = nullptr, const ExprData 
 
 %token <intNum>     INTEGER
 %token <realNum>    REALNUMBER
-%token <id>         IDENTIFIER
+%token <strVal>     STRING
+%token <strVal>     IDENTIFIER
 
 %type <symbol> value assignment
 %type <symbolType> type
@@ -196,33 +200,62 @@ expr:
     ;
 
 print:
-      PRINT LEFT_PAREN expr RIGHT_PAREN { 
-                                            fprintf(yyout, "printf(");
-                                            for (int i = 0; i < $3.symbolCount; i++) {
-                                                const Symbol* symbol = &($3.symbols[i]);
-                                                switch (symbol->type) {
-                                                case TYPE_INT:
-                                                    fprintf(yyout, "\"%%d\\n\", ");
-                                                    break;
-                                                case TYPE_REAL:
-                                                    fprintf(yyout, "\"%%f\\n\", ");
-                                                    break;
-                                                case TYPE_BOOL:
-                                                    fprintf(yyout, "\"%%d\\n\", ");
-                                                    break;
-                                                case TYPE_CHAR:
-                                                    fprintf(yyout, "\"%%c\\n\", ");
-                                                    break;
+      PRINT LEFT_PAREN expr RIGHT_PAREN     { 
+                                                fprintf(yyout, "printf(");
+                                                for (int i = 0; i < $3.symbolCount; i++) {
+                                                    const Symbol* symbol = &($3.symbols[i]);
+                                                    switch (symbol->type) {
+                                                    case TYPE_INT:
+                                                        fprintf(yyout, "\"%%d\", ");
+                                                        break;
+                                                    case TYPE_REAL:
+                                                        fprintf(yyout, "\"%%f\", ");
+                                                        break;
+                                                    case TYPE_BOOL:
+                                                        fprintf(yyout, "\"%%d\", ");
+                                                        break;
+                                                    case TYPE_CHAR:
+                                                        fprintf(yyout, "\"%%c\", ");
+                                                        break;
+                                                    case TYPE_STRING:
+                                                        fprintf(yyout, "\"%%s\", ");
+                                                        break;
+                                                    }
+                                                    printSymbol(symbol);
+                                                    fprintf(yyout, ")");
                                                 }
-                                                printSymbol(symbol);
-                                                fprintf(yyout, ")");
-                                            }
-                                        } 
+                                            } 
+    | PRINTLN LEFT_PAREN expr RIGHT_PAREN   { 
+                                                fprintf(yyout, "printf(");
+                                                for (int i = 0; i < $3.symbolCount; i++) {
+                                                    const Symbol* symbol = &($3.symbols[i]);
+                                                    switch (symbol->type) {
+                                                    case TYPE_INT:
+                                                        fprintf(yyout, "\"%%d\\n\", ");
+                                                        break;
+                                                    case TYPE_REAL:
+                                                        fprintf(yyout, "\"%%f\\n\", ");
+                                                        break;
+                                                    case TYPE_BOOL:
+                                                        fprintf(yyout, "\"%%d\\n\", ");
+                                                        break;
+                                                    case TYPE_CHAR:
+                                                        fprintf(yyout, "\"%%c\\n\", ");
+                                                        break;
+                                                    case TYPE_STRING:
+                                                        fprintf(yyout, "\"%%s\\n\", ");
+                                                        break;
+                                                    }
+                                                    printSymbol(symbol);
+                                                    fprintf(yyout, ")");
+                                                }
+                                            } 
     ;
 
 value:
       REALNUMBER                        { $$.type = TYPE_REAL; $$.value.realNum = $1; $$.isVar = 0; }
     | INTEGER                           { $$.type = TYPE_INT; $$.value.intNum = $1; $$.isVar = 0; }
+    | STRING                            { $$.type = TYPE_STRING; $$.value.strVal = strdup($1); $$.isVar = 0;}
     | IDENTIFIER                        { 
                                             Symbol *s = findSymbol($1);
                                             if (s) {

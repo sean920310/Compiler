@@ -5,10 +5,15 @@
     #include "parser.tab.h"
     void yyerror(const char *s);
     int lineNum = 1;
+    #define MAX_STRING 2
+
+    char stringBuffer[MAX_STRING] = {0};
+    int stringCount = 0;
+
 %}
 
 %x COMMENT
-%x STRING
+%x STRINGS
 %x MULTI_LN_COMMENT
 ESCAPE_SEQ          [nt\'\"\?\\]
 DIGIT               [0-9]  
@@ -25,13 +30,13 @@ WRONG_IDENTIFIER    {DIGIT}+{IDENTIFIER}
 <COMMENT>\n         { BEGIN 0; printf("\n"); lineNum++; }
 <COMMENT>.          { ; }
 
-\"                  { BEGIN STRING; }
-<STRING>\"          { BEGIN 0; printf("<STRING>"); }
-<STRING>\\\n        { lineNum++; }
-<STRING>\n          { yyerror("Missing \" "); yyterminate(); }
-<STRING><<EOF>>     { yyerror("Missing \" "); yyterminate(); }
-<STRING>\\\"        { ; }
-<STRING>.           { ; }
+\"                      { BEGIN STRINGS; stringBuffer[0] = '"', stringBuffer[1] = '\0';}
+<STRINGS>\"             { printf("<STRINGS>"); strcat(stringBuffer, "\""); yylval.strVal = strdup(stringBuffer); BEGIN 0; return STRING; }
+<STRINGS>\\\n           { strcat(stringBuffer, yytext); stringCount += 2; lineNum++; }
+<STRINGS>\n             { yyerror("Missing \" "); yyterminate(); }
+<STRINGS><<EOF>>        { yyerror("Missing \" "); yyterminate(); }
+<STRINGS>\\\"           { strcat(stringBuffer, yytext); stringCount++; }
+<STRINGS>.              { strcat(stringBuffer, yytext); stringCount++; }
 
 \/\*                        { BEGIN MULTI_LN_COMMENT; }
 <MULTI_LN_COMMENT><<EOF>>   { yyerror("Missing */ "); yyterminate(); }
@@ -50,6 +55,7 @@ WRONG_IDENTIFIER    {DIGIT}+{IDENTIFIER}
 "fun"               { printf("<FUN>"); return FUN; }
 "main"              { printf("<MAIN>"); return MAIN; }
 "print"             { printf("<PRINT>"); return PRINT; }
+"println"           { printf("<PRINTLN>"); return PRINTLN; }
 "ret"               { printf("<RET>"); return RET; }
 
 "if"                { printf("<IF>"); }
@@ -88,7 +94,7 @@ WRONG_IDENTIFIER    {DIGIT}+{IDENTIFIER}
 \'\\{ESCAPE_SEQ}\'  { printf("<ESCAPE_SEQ>"); }
 \'.\'               { printf("<CHARACTER>"); }
 {WRONG_IDENTIFIER}  { yyerror("Wrong identifier name"); yyterminate();}
-{IDENTIFIER}        { printf("<IDENTIFIER>"); yylval.id = strdup(yytext); return IDENTIFIER;}
+{IDENTIFIER}        { printf("<IDENTIFIER>"); yylval.strVal = strdup(yytext); return IDENTIFIER;}
 {INT}               { printf("<INTEGER>"); sscanf(yytext, "%d", &(yylval.intNum)); return INTEGER; }
 {REAL}              { printf("<REALNUMBER>"); sscanf(yytext, "%f", &(yylval.realNum)); return REALNUMBER; }
 
