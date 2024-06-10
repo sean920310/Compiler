@@ -28,12 +28,24 @@ typedef union
 
 typedef struct
 {
-    char name[1024];
+    char name[64];
     int isVar;
     SymbolType type;
     SymbolValue value;
 } Symbol;
 
-void printSymbolVal(Symbol *symbol);
+typedef struct
+{
+    Symbol symbols[512];
+    int symbolCount;
+} ExprData;
+
+void printSymbol(const Symbol *symbol);
+
+/*
+    結合lhs + concatSymbol + rhs
+    回傳給 result
+*/
+void concatExpr(ExprData *result, const ExprData *lhs, const ExprData *rhs, const char *concatChar);
 
 #endif

@@ -30,22 +30,59 @@ Symbol* findSymbol(const char *name) {
     return NULL; // not found
 }
 
-void printSymbolVal(Symbol *symbol)
+void printSymbol(const Symbol *symbol)
 {
-    switch (symbol->type)
+    if(symbol->isVar){
+        fprintf(yyout, "%s", symbol->name);
+        printf("%s", symbol->name); 
+    }
+    else{
+        switch (symbol->type)
+        {
+        case TYPE_INT:
+            fprintf(yyout, "%d", symbol->value.intNum);
+            break;
+        case TYPE_REAL:
+            fprintf(yyout, "%f", symbol->value.realNum);
+            break;
+        case TYPE_BOOL:
+            fprintf(yyout, "%d", symbol->value.boolVal);
+            break;
+        case TYPE_CHAR:
+            fprintf(yyout, "%c", symbol->value.charVal);
+            break;
+        }
+    }
+}
+
+void concatExpr(ExprData *result, const ExprData *lhs = nullptr, const ExprData *rhs = nullptr, const char *concatChar = nullptr)
+{
+    result->symbolCount = 0;
+    if(lhs != nullptr)
     {
-    case TYPE_INT:
-        fprintf(yyout, "%d", symbol->value.intNum);
-        break;
-    case TYPE_REAL:
-        fprintf(yyout, "%f", symbol->value.realNum);
-        break;
-    case TYPE_BOOL:
-        fprintf(yyout, "%d", symbol->value.boolVal);
-        break;
-    case TYPE_CHAR:
-        fprintf(yyout, "%c", symbol->value.charVal);
-        break;
+        for (int i = 0; i < lhs->symbolCount; i++)
+        {
+            result->symbols[i] = lhs->symbols[i];
+        }
+        result->symbolCount = lhs->symbolCount;
+    }
+
+    if (concatChar != nullptr)
+    {
+        Symbol charSymbol;
+        charSymbol.isVar = 1;
+        strcpy(charSymbol.name, concatChar);
+        result->symbols[result->symbolCount] = charSymbol;
+        result->symbolCount++;
+    }
+
+    if(rhs != nullptr)
+    {
+        for (int i = 0; i < rhs->symbolCount; i++)
+        {
+            result->symbols[result->symbolCount + i] = rhs->symbols[i];
+        }
+        result->symbolCount += rhs->symbolCount;
     }
 }
 
@@ -58,6 +95,8 @@ void printSymbolVal(Symbol *symbol)
     char            charVal;
     int             boolVal;
     char*           id;
+    SymbolType      symbolType;
+    ExprData        exprData;
 }
 
 %token FUN MAIN PRINT CLASS RET
@@ -70,7 +109,10 @@ void printSymbolVal(Symbol *symbol)
 %token <realNum>    REALNUMBER
 %token <id>         IDENTIFIER
 
-%type <symbol> value expr assignment type
+%type <symbol> value assignment
+%type <symbolType> type
+%type <exprData> expr
+
 
 %left PLUS MINUS
 %left ASTERISK DIVIDE
@@ -104,15 +146,22 @@ stmt:
     ;
 
 declare:
-      VAR IDENTIFIER COLON type                 { addSymbol($2, $4.type); fprintf(yyout, " %s", $2); }
-    | VAR IDENTIFIER COLON type ASSIGN expr     { addSymbol($2, $4.type); fprintf(yyout, " %s = ", $2); printSymbolVal(&$6); } 
+      VAR IDENTIFIER COLON type                 { addSymbol($2, $4); fprintf(yyout, " %s", $2); }
+    | VAR IDENTIFIER COLON type ASSIGN expr     { 
+                                                    addSymbol($2, $4); 
+                                                    fprintf(yyout, " %s = ", $2); 
+                                                    for (int i = 0; i < $6.symbolCount; i++) {
+                                                        const Symbol* symbol = &($6.symbols[i]);
+                                                        printSymbol(symbol); 
+                                                    }
+                                                } 
     ;
 
 type:
-      BOOL                              { $$.type = TYPE_BOOL; fprintf(yyout, "int");}
-    | CHAR                              { $$.type = TYPE_CHAR; fprintf(yyout, "char");}
-    | INT                               { $$.type = TYPE_INT; fprintf(yyout, "int");}
-    | REAL                              { $$.type = TYPE_REAL; fprintf(yyout, "float");}
+      BOOL                              { $$ = TYPE_BOOL; fprintf(yyout, "int");}
+    | CHAR                              { $$ = TYPE_CHAR; fprintf(yyout, "char");}
+    | INT                               { $$ = TYPE_INT; fprintf(yyout, "int");}
+    | REAL                              { $$ = TYPE_REAL; fprintf(yyout, "float");}
     ;
 
 assignment:
@@ -124,45 +173,50 @@ assignment:
                                         } else {
                                             yyerror("Error: undeclared variable" );
                                         }
-                                    printSymbolVal(&$3); 
+                                    for (int i = 0; i < $3.symbolCount; i++) {
+                                        const Symbol* symbol = &($3.symbols[i]);
+                                        printSymbol(symbol); 
+                                    }
                                     
                                 }        
     ;
 
 expr:
-      value                                                         { $$ = $1; }                              
-    | expr PLUS expr                                                { fprintf(yyout, "+"); }
-    | expr MINUS expr                                               { fprintf(yyout, "-"); } 
-    | expr ASTERISK expr                                            { fprintf(yyout, "*"); } 
-    | expr DIVIDE expr                                              { fprintf(yyout, "/"); }
+      value                                                         { $$.symbols[0] = $1; $$.symbolCount = 1; }                              
+    | expr PLUS expr                                                { concatExpr(&($$), &($1), &($3), "+"); }
+    | expr MINUS expr                                               { concatExpr(&($$), &($1), &($3), "-"); } 
+    | expr ASTERISK expr                                            { concatExpr(&($$), &($1), &($3), "*"); } 
+    | expr DIVIDE expr                                              { concatExpr(&($$), &($1), &($3), "/"); }
+    | LEFT_PAREN expr RIGHT_PAREN                                   { 
+                                                                        concatExpr(&($$), nullptr, &($2), "(");
+                                                                        ExprData temp = $$;
+                                                                        concatExpr(&($$), &(temp), nullptr, ")");
+                                                                    }
     | MINUS { fprintf(yyout, "-"); } expr %prec UMINUS              { $$ = $3; }
     ;
 
 print:
       PRINT LEFT_PAREN expr RIGHT_PAREN { 
                                             fprintf(yyout, "printf(");
-                                            switch ($3.type) {
-                                            case TYPE_INT:
-                                                fprintf(yyout, "\"%%d\\n\", ");
-                                                break;
-                                            case TYPE_REAL:
-                                                fprintf(yyout, "\"%%f\\n\", ");
-                                                break;
-                                            case TYPE_BOOL:
-                                                fprintf(yyout, "\"%%d\\n\", ");
-                                                break;
-                                            case TYPE_CHAR:
-                                                fprintf(yyout, "\"%%c\\n\", ");
-                                                break;
+                                            for (int i = 0; i < $3.symbolCount; i++) {
+                                                const Symbol* symbol = &($3.symbols[i]);
+                                                switch (symbol->type) {
+                                                case TYPE_INT:
+                                                    fprintf(yyout, "\"%%d\\n\", ");
+                                                    break;
+                                                case TYPE_REAL:
+                                                    fprintf(yyout, "\"%%f\\n\", ");
+                                                    break;
+                                                case TYPE_BOOL:
+                                                    fprintf(yyout, "\"%%d\\n\", ");
+                                                    break;
+                                                case TYPE_CHAR:
+                                                    fprintf(yyout, "\"%%c\\n\", ");
+                                                    break;
+                                                }
+                                                printSymbol(symbol);
+                                                fprintf(yyout, ")");
                                             }
-                                            if($3.isVar){
-                                                fprintf(yyout, "%s", $3.name);
-                                                printf("%s", $3.name); 
-                                            }
-                                            else{
-                                                printSymbolVal(&$3);
-                                            }
-                                            fprintf(yyout, ")");
                                         } 
     ;
 
