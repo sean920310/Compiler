@@ -446,7 +446,7 @@ void operatExpr(ExprData *result, const ExprData *lhs, const ExprData *rhs, cons
 %%
 
 program:
-      { fprintf(yyout, "#include <stdio.h>\n#include <stdlib.h>\n"); } main
+      { fprintf(yyout, "#include <stdio.h>\n"); } main
     ;
     
 main:
