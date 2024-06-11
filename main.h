@@ -61,9 +61,13 @@ void copyExpr(ExprData *des, const ExprData *src);
 */
 void concatExpr(ExprData *result, const ExprData *lhs, const ExprData *rhs, const char *concatChar);
 
-ArrayData *findArray(const char *name);
+int addSymbol(const char *name, SymbolType valueType);
+
+Symbol *findSymbol(const char *name);
 
 int addArray(const char *name, SymbolType valueType);
+
+ArrayData *findArray(const char *name);
 
 void modifyType(Symbol *symbol, SymbolType des);
 

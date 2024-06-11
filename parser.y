@@ -15,6 +15,11 @@ int symbolCount = 0;
 int arrayCount = 0;
 
 int addSymbol(const char *name, SymbolType valueType) {
+    Symbol* s = findSymbol(name);
+    if(s){
+        yyerror("duplicate declaration" );
+        exit(0);
+    }
     if (symbolCount < MAX_SYMBOLS) {
         symbolTable[symbolCount].name = (char*)malloc(strlen(name) + 1);
         if (symbolTable[symbolCount].name != NULL) {
@@ -171,6 +176,9 @@ void modifyType(Symbol *symbol, SymbolType des)
     case TYPE_INT:
         switch (src)
         {
+        case NONE:
+            symbol->value.intNum = 0;
+            break;
         case TYPE_REAL:
             symbol->value.intNum = (int)symbol->value.realNum;
             break;
@@ -189,6 +197,9 @@ void modifyType(Symbol *symbol, SymbolType des)
     case TYPE_REAL:
         switch (src)
         {
+        case NONE:
+            symbol->value.realNum = 0.0f;
+            break;
         case TYPE_INT:
             symbol->value.realNum = (float)symbol->value.intNum;
             break;
@@ -207,6 +218,9 @@ void modifyType(Symbol *symbol, SymbolType des)
     case TYPE_BOOL:
         switch (src)
         {
+        case NONE:
+            symbol->value.boolVal = 0;
+            break;
         case TYPE_INT:
             symbol->value.boolVal = symbol->value.intNum != 0;
             break;
@@ -229,6 +243,9 @@ void modifyType(Symbol *symbol, SymbolType des)
     case TYPE_CHAR:
         switch (src)
         {
+        case NONE:
+            symbol->value.charVal = (char)0;
+            break;
         case TYPE_INT:
             symbol->value.charVal = (char)symbol->value.intNum;
             break;
@@ -336,15 +353,15 @@ void operatExpr(ExprData *result, const ExprData *lhs, const ExprData *rhs, cons
             return;
         const ArrayData *lArr = findArray(lhs->symbols[0].name);
         const ArrayData *rArr = findArray(rhs->symbols[0].name);
-        addArray("c==3", lArr->type);
-        ArrayData *resultArr = findArray("c==3");
         if (strcmp(op, "+") == 0)
         {
             int count = lArr->count > rArr->count ? lArr->count : rArr->count;
             
             result->symbolCount = 1;
-            result->symbols->isArr = 1;
-            strcpy(result->symbols->name, "c==3");
+            result->symbols[0].isArr = 1;
+            strcpy(result->symbols[0].name, "c==3");
+            addArray("c==3", lArr->type);
+            ArrayData *resultArr = findArray("c==3");
 
             for (int i = 0; i < count; i++)
             {
@@ -360,6 +377,29 @@ void operatExpr(ExprData *result, const ExprData *lhs, const ExprData *rhs, cons
         }
         else if (strcmp(op, "*") == 0)
         {
+            if(lArr->count != rArr->count)
+            {
+                yyerror("mismatched dimensions");
+                exit(0);
+            } 
+            int count = lArr->count;
+            result->symbolCount = 1;
+            result->symbols[0].isArr = 0;
+            result->symbols[0].isVar = 0;
+            strcpy(result->symbols[0].name, "c==3");
+            result->symbols[0].type = lArr->type;
+
+            SymbolValue resultVal;
+            for (int i = 0; i < count; i++)
+            {
+                SymbolValue empty;
+                SymbolValue lVal = i > lArr->count - 1 ? empty : lArr->value[i].value;
+                SymbolValue rVal = i > rArr->count - 1 ? empty : rArr->value[i].value;
+                printf("%f, %f", lVal.realNum, rVal.realNum);
+                SymbolValue temp = operateSymbolVal(lVal, rVal, op);
+                resultVal = operateSymbolVal(resultVal, temp, "+");
+            }
+            result->symbols[0].value = resultVal;
         }
     }
     else
@@ -445,7 +485,11 @@ declare:
                                                                                                                 addArray($2, $4); 
                                                                                                                 fprintf(yyout, " %s[%d] = {", $2, $6);
                                                                                                                 ArrayData* arr = findArray($2); 
-                                                                                                                arr->count = $10.count;
+                                                                                                                arr->count = $6;
+                                                                                                                if($6 < $10.count){
+                                                                                                                    yyerror("too many dimensions");
+                                                                                                                    exit(0);
+                                                                                                                }
                                                                                                                 for(int i=0;i<arr->count;i++){
                                                                                                                     memcpy(&(arr->value[i]), &($10.value[i]), sizeof(Symbol));
                                                                                                                     Symbol* symbol = &(arr->value[i]);
@@ -462,7 +506,8 @@ declare:
                                                                                                                 if (s) {
                                                                                                                     s->isArr = 1;
                                                                                                                 } else {
-                                                                                                                    yyerror("Error: undeclared variable" );
+                                                                                                                    yyerror("undeclared variable" );
+                                                                                                                    exit(0);
                                                                                                                 }
                                                                                                             }
     ;
@@ -475,7 +520,8 @@ assignment:
                                         if (s) {
                                             
                                         } else {
-                                            yyerror("Error: undeclared variable" );
+                                            yyerror("undeclared variable" );
+                                            exit(0);
                                         }
                                     for (int i = 0; i < $3.symbolCount; i++) {
                                         const Symbol* symbol = &($3.symbols[i]);
@@ -504,7 +550,7 @@ expr:
       value                                                         { $$.symbols[0] = $1; $$.symbolCount = 1; }                              
     | expr PLUS expr                                                { operatExpr(&($$), &($1), &($3), "+"); }
     | expr MINUS expr                                               { concatExpr(&($$), &($1), &($3), "-"); } 
-    | expr ASTERISK expr                                            { concatExpr(&($$), &($1), &($3), "*"); } 
+    | expr ASTERISK expr                                            { operatExpr(&($$), &($1), &($3), "*"); } 
     | expr DIVIDE expr                                              { concatExpr(&($$), &($1), &($3), "/"); }
     | LEFT_PAREN expr RIGHT_PAREN                                   { 
                                                                         concatExpr(&($$), nullptr, &($2), "(");
@@ -534,7 +580,8 @@ value:
                                                 $$.isVar = 1;
                                                 $$.isArr = s->isArr;
                                             } else {
-                                                yyerror("Error: undeclared variable" );
+                                                yyerror("undeclared variable" );
+                                                exit(0);
                                             } 
                                         }  
     | MINUS value %prec UMINUS          { 
