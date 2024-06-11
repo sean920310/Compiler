@@ -16,7 +16,10 @@ int arrayCount = 0;
 
 int addSymbol(const char *name, SymbolType valueType) {
     if (symbolCount < MAX_SYMBOLS) {
-        symbolTable[symbolCount].name = strdup(name);
+        symbolTable[symbolCount].name = (char*)malloc(strlen(name) + 1);
+        if (symbolTable[symbolCount].name != NULL) {
+            strcpy(symbolTable[symbolCount].name, name);
+        }
         symbolTable[symbolCount].type = valueType;
         symbolCount++;
         return 0; // success
@@ -34,9 +37,12 @@ Symbol* findSymbol(const char *name) {
 }
 
 int addArray(const char *name, SymbolType valueType) {
-    if (symbolCount < MAX_SYMBOLS) {
-        arrayTable[symbolCount].name = strdup(name);
-        arrayTable[symbolCount].type = valueType;
+    if (arrayCount < MAX_SYMBOLS) {
+        arrayTable[arrayCount].name = (char*)malloc(strlen(name) + 1);
+        if (arrayTable[arrayCount].name != NULL) {
+            strcpy(arrayTable[arrayCount].name, name);
+        }
+        arrayTable[arrayCount].type = valueType;
         arrayCount++;
         return 0; // success
     }
@@ -80,6 +86,116 @@ void printSymbol(const Symbol *symbol)
     }
 }
 
+void modifyType(Symbol *symbol, SymbolType des)
+{
+    SymbolType src = symbol->type;
+    switch (des)
+    {
+    case TYPE_INT:
+        switch (src)
+        {
+        case TYPE_REAL:
+            symbol->value.intNum = (int)symbol->value.realNum;
+            break;
+        case TYPE_BOOL:
+            symbol->value.intNum = symbol->value.boolVal ? 1 : 0;
+            break;
+        case TYPE_CHAR:
+            symbol->value.intNum = (int)symbol->value.charVal;
+            break;
+        default:
+            printf("Error: Unsupported conversion to TYPE_INT.\n");
+            return;
+        }
+        break;
+
+    case TYPE_REAL:
+        switch (src)
+        {
+        case TYPE_INT:
+            symbol->value.realNum = (float)symbol->value.intNum;
+            break;
+        case TYPE_BOOL:
+            symbol->value.realNum = symbol->value.boolVal ? 1.0f : 0.0f;
+            break;
+        case TYPE_CHAR:
+            symbol->value.realNum = (float)symbol->value.charVal;
+            break;
+        default:
+            printf("Error: Unsupported conversion to TYPE_REAL.\n");
+            return;
+        }
+        break;
+
+    case TYPE_BOOL:
+        switch (src)
+        {
+        case TYPE_INT:
+            symbol->value.boolVal = symbol->value.intNum != 0;
+            break;
+        case TYPE_REAL:
+            symbol->value.boolVal = symbol->value.realNum != 0.0f;
+            break;
+        case TYPE_CHAR:
+            symbol->value.boolVal = symbol->value.charVal != '\0';
+            break;
+        case TYPE_STRING:
+            symbol->value.boolVal = strlen(symbol->value.strVal) > 0;
+            free(symbol->value.strVal);
+            break;
+        default:
+            printf("Error: Unsupported conversion to TYPE_BOOL.\n");
+            return;
+        }
+        break;
+
+    case TYPE_CHAR:
+        switch (src)
+        {
+        case TYPE_INT:
+            symbol->value.charVal = (char)symbol->value.intNum;
+            break;
+        case TYPE_REAL:
+            symbol->value.charVal = (char)symbol->value.realNum;
+            break;
+        case TYPE_BOOL:
+            symbol->value.charVal = symbol->value.boolVal ? '1' : '0';
+            break;
+        default:
+            printf("Error: Unsupported conversion to TYPE_CHAR.\n");
+            return;
+        }
+        break;
+    }
+    symbol->type = des;
+}
+
+SymbolValue operateSymbolVal(const SymbolValue lhs, const SymbolValue rhs, const char *op)
+{
+    SymbolValue result;
+    if (strcmp(op, "+") == 0)
+    {
+        result.intNum = lhs.intNum + rhs.intNum;
+        result.realNum = lhs.realNum + rhs.realNum;
+    }
+    else if (strcmp(op, "-") == 0)
+    {
+        result.intNum = lhs.intNum - rhs.intNum;
+        result.realNum = lhs.realNum - rhs.realNum;
+    }
+    else if (strcmp(op, "*") == 0)
+    {
+        result.intNum = lhs.intNum * rhs.intNum;
+        result.realNum = lhs.realNum * rhs.realNum;
+    }
+    else if (strcmp(op, "/") == 0)
+    {
+        result.intNum = lhs.intNum / rhs.intNum;
+        result.realNum = lhs.realNum / rhs.realNum;
+    }
+    return result;
+}
+
 void copyExpr(ExprData *des, const ExprData *src)
 {
     memcpy(des->symbols, src->symbols, src->symbolCount);
@@ -114,6 +230,61 @@ void concatExpr(ExprData *result, const ExprData *lhs = nullptr, const ExprData 
             result->symbols[result->symbolCount + i] = rhs->symbols[i];
         }
         result->symbolCount += rhs->symbolCount;
+    }
+}
+
+void operatExpr(ExprData *result, const ExprData *lhs, const ExprData *rhs, const char *op)
+{
+    int arrOp = 0;
+    for (int i = 0; i < lhs->symbolCount; i++)
+    {
+        if (!arrOp && lhs->symbols[i].isArr)
+        {
+            arrOp = 1;
+            break;
+        }
+    }
+    for (int i = 0; i < rhs->symbolCount; i++)
+    {
+        if (!arrOp && rhs->symbols[i].isArr)
+        {
+            arrOp = 1;
+            break;
+        }
+    }
+    printf("isArr: %d", arrOp);
+    if (arrOp)
+    {
+        if (lhs->symbolCount > 1 || rhs->symbolCount > 1)
+            return;
+        const ArrayData *lArr = findArray(lhs->symbols[0].name);
+        const ArrayData *rArr = findArray(rhs->symbols[0].name);
+        addArray("c==3", lArr->type);
+        ArrayData *resultArr = findArray("c==3");
+        if (strcmp(op, "+") == 0)
+        {
+            int count = lArr->count > rArr->count ? lArr->count : rArr->count;
+            
+            result->symbolCount = 1;
+            result->symbols->isArr = 1;
+            strcpy(result->symbols->name, "c==3");
+
+            for (int i = 0; i < count; i++)
+            {
+                SymbolValue empty;
+                SymbolValue lVal = i > lArr->count - 1 ? empty : lArr->value[i].value;
+                SymbolValue rVal = i > rArr->count - 1 ? empty : rArr->value[i].value;
+                SymbolValue resultVal = operateSymbolVal(lVal, rVal, op);
+                resultArr->value[i].value = resultVal;
+            }
+        }
+        else if (strcmp(op, "*") == 0)
+        {
+        }
+    }
+    else
+    {
+        concatExpr(result, lhs, rhs, op);
     }
 }
 
@@ -190,6 +361,7 @@ declare:
                                                     }
                                                 } 
     | VAR IDENTIFIER COLON type LEFT_BRACKET INTEGER RIGHT_BRACKET ASSIGN LEFT_BRACE array RIGHT_BRACE      { 
+                                                                                                                addSymbol($2, $4);
                                                                                                                 addArray($2, $4); 
                                                                                                                 fprintf(yyout, " %s[%d] = {", $2, $6);
                                                                                                                 ArrayData* arr = findArray($2); 
@@ -197,13 +369,21 @@ declare:
                                                                                                                 arr->count = $10.count;
                                                                                                                 for(int i=0;i<$10.count;i++){
                                                                                                                     Symbol* symbol = &($10.value[i]);
+                                                                                                                    if(symbol->type != arr->type){
+                                                                                                                        modifyType(symbol, arr->type);
+                                                                                                                    }
                                                                                                                     printSymbol(symbol);
                                                                                                                     if(i != $10.count - 1){
                                                                                                                         fprintf(yyout, ", ");
                                                                                                                     }
                                                                                                                 }
                                                                                                                 fprintf(yyout, "}");
-
+                                                                                                                Symbol *s = findSymbol($2);
+                                                                                                                if (s) {
+                                                                                                                    s->isArr = 1;
+                                                                                                                } else {
+                                                                                                                    yyerror("Error: undeclared variable" );
+                                                                                                                }
                                                                                                             }
     ;
 
@@ -242,7 +422,7 @@ array:
 
 expr:
       value                                                         { $$.symbols[0] = $1; $$.symbolCount = 1; }                              
-    | expr PLUS expr                                                { concatExpr(&($$), &($1), &($3), "+"); }
+    | expr PLUS expr                                                { operatExpr(&($$), &($1), &($3), "+"); }
     | expr MINUS expr                                               { concatExpr(&($$), &($1), &($3), "-"); } 
     | expr ASTERISK expr                                            { concatExpr(&($$), &($1), &($3), "*"); } 
     | expr DIVIDE expr                                              { concatExpr(&($$), &($1), &($3), "/"); }
@@ -330,6 +510,7 @@ value:
                                                 $$.type = s->type;
                                                 $$.name = strdup(s->name);
                                                 $$.isVar = 1;
+                                                $$.isArr = s->isArr;
                                             } else {
                                                 yyerror("Error: undeclared variable" );
                                             } 
