@@ -71,4 +71,8 @@ SymbolValue operateSymbolVal(const SymbolValue lhs, const SymbolValue rhs, const
 
 void operatExpr(ExprData *result, const ExprData *lhs, const ExprData *rhs, const char *op);
 
+void printType(SymbolType type);
+
+void printExpr(ExprData *expr, int newLine);
+
 #endif

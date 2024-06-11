@@ -86,6 +86,83 @@ void printSymbol(const Symbol *symbol)
     }
 }
 
+void printType(SymbolType type)
+{
+    switch (type)
+    {
+    case TYPE_INT:
+        fprintf(yyout, "%%d");
+        break;
+    case TYPE_REAL:
+        fprintf(yyout, "%%f");
+        break;
+    case TYPE_BOOL:
+        fprintf(yyout, "%%d");
+        break;
+    case TYPE_CHAR:
+        fprintf(yyout, "%%c");
+        break;
+    case TYPE_STRING:
+        fprintf(yyout, "%%s");
+        break;
+    }
+}
+
+void printExpr(ExprData *expr, int newLine = 0)
+{
+    fprintf(yyout, "printf(\"");
+    SymbolType pType = NONE;
+
+    int isArr = 0;
+    for (int i = 0; i < expr->symbolCount; i++)
+    {
+        const Symbol *symbol = &(expr->symbols[i]);
+        if (pType == NONE)
+        {
+            pType = symbol->type;
+        }
+        if (!isArr && symbol->isArr)
+        {
+            isArr = 1;
+        }
+    }
+
+    if (isArr)
+    {
+        for (int i = 0; i < expr->symbolCount; i++)
+        {
+            const Symbol *symbol = &(expr->symbols[i]);
+            const ArrayData *arr = findArray(symbol->name);
+            fprintf(yyout, "{");
+            for (int j = 0; j < arr->count; j++)
+            {
+                const Symbol *symbol = &(arr->value[j]);
+                printSymbol(symbol);
+
+                if (j != arr->count - 1)
+                    fprintf(yyout, ", ");
+            }
+            fprintf(yyout, "}");
+            if(newLine)
+                fprintf(yyout, "\\n");
+            fprintf(yyout, "\"");
+        }
+    }
+    else
+    {
+        printType(pType);
+        if(newLine)
+            fprintf(yyout, "\\n");
+        fprintf(yyout, "\", ");
+        for (int i = 0; i < expr->symbolCount; i++)
+        {
+            const Symbol *symbol = &(expr->symbols[i]);
+            printSymbol(symbol);
+        }
+    }
+    fprintf(yyout, ")");
+}
+
 void modifyType(Symbol *symbol, SymbolType des)
 {
     SymbolType src = symbol->type;
@@ -252,7 +329,7 @@ void operatExpr(ExprData *result, const ExprData *lhs, const ExprData *rhs, cons
             break;
         }
     }
-    printf("isArr: %d", arrOp);
+
     if (arrOp)
     {
         if (lhs->symbolCount > 1 || rhs->symbolCount > 1)
@@ -274,9 +351,12 @@ void operatExpr(ExprData *result, const ExprData *lhs, const ExprData *rhs, cons
                 SymbolValue empty;
                 SymbolValue lVal = i > lArr->count - 1 ? empty : lArr->value[i].value;
                 SymbolValue rVal = i > rArr->count - 1 ? empty : rArr->value[i].value;
+                printf("%f, %f", lVal.realNum, rVal.realNum);
                 SymbolValue resultVal = operateSymbolVal(lVal, rVal, op);
                 resultArr->value[i].value = resultVal;
+                resultArr->value[i].type = lArr->type;
             }
+            resultArr->count = count;
         }
         else if (strcmp(op, "*") == 0)
         {
@@ -365,15 +445,15 @@ declare:
                                                                                                                 addArray($2, $4); 
                                                                                                                 fprintf(yyout, " %s[%d] = {", $2, $6);
                                                                                                                 ArrayData* arr = findArray($2); 
-                                                                                                                memcpy(arr->value, $10.value, $10.count);
                                                                                                                 arr->count = $10.count;
-                                                                                                                for(int i=0;i<$10.count;i++){
-                                                                                                                    Symbol* symbol = &($10.value[i]);
+                                                                                                                for(int i=0;i<arr->count;i++){
+                                                                                                                    memcpy(&(arr->value[i]), &($10.value[i]), sizeof(Symbol));
+                                                                                                                    Symbol* symbol = &(arr->value[i]);
                                                                                                                     if(symbol->type != arr->type){
                                                                                                                         modifyType(symbol, arr->type);
                                                                                                                     }
                                                                                                                     printSymbol(symbol);
-                                                                                                                    if(i != $10.count - 1){
+                                                                                                                    if(i != arr->count - 1){
                                                                                                                         fprintf(yyout, ", ");
                                                                                                                     }
                                                                                                                 }
@@ -435,68 +515,10 @@ expr:
 
 print:
       PRINT LEFT_PAREN expr RIGHT_PAREN     { 
-                                                fprintf(yyout, "printf(");
-                                                SymbolType pType = NONE;
-                                                for (int i = 0; i < $3.symbolCount; i++) {
-                                                    const Symbol* symbol = &($3.symbols[i]);
-                                                    if (pType == NONE){
-                                                        pType = symbol->type;
-                                                    }
-                                                }
-                                                switch (pType) {
-                                                case TYPE_INT:
-                                                    fprintf(yyout, "\"%%d\", ");
-                                                    break;
-                                                case TYPE_REAL:
-                                                    fprintf(yyout, "\"%%f\", ");
-                                                    break;
-                                                case TYPE_BOOL:
-                                                    fprintf(yyout, "\"%%d\", ");
-                                                    break;
-                                                case TYPE_CHAR:
-                                                    fprintf(yyout, "\"%%c\", ");
-                                                    break;
-                                                case TYPE_STRING:
-                                                    fprintf(yyout, "\"%%s\", ");
-                                                    break;
-                                                }
-                                                for (int i = 0; i < $3.symbolCount; i++) {
-                                                    const Symbol* symbol = &($3.symbols[i]);
-                                                    printSymbol(symbol);
-                                                }
-                                                fprintf(yyout, ")");
+                                                printExpr(&($3));
                                             } 
     | PRINTLN LEFT_PAREN expr RIGHT_PAREN   {
-                                                fprintf(yyout, "printf(");
-                                                SymbolType pType  = NONE;
-                                                for (int i = 0; i < $3.symbolCount; i++) {
-                                                    const Symbol* symbol = &($3.symbols[i]);
-                                                    if (pType == NONE){
-                                                        pType = symbol->type;
-                                                    }
-                                                }
-                                                switch (pType) {
-                                                case TYPE_INT:
-                                                    fprintf(yyout, "\"%%d\\n\", ");
-                                                    break;
-                                                case TYPE_REAL:
-                                                    fprintf(yyout, "\"%%f\\n\", ");
-                                                    break;
-                                                case TYPE_BOOL:
-                                                    fprintf(yyout, "\"%%d\\n\", ");
-                                                    break;
-                                                case TYPE_CHAR:
-                                                    fprintf(yyout, "\"%%c\\n\", ");
-                                                    break;
-                                                case TYPE_STRING:
-                                                    fprintf(yyout, "\"%%s\\n\", ");
-                                                    break;
-                                                }
-                                                for (int i = 0; i < $3.symbolCount; i++) {
-                                                    const Symbol* symbol = &($3.symbols[i]);
-                                                    printSymbol(symbol);
-                                                }
-                                                fprintf(yyout, ")");
+                                                printExpr(&($3), 1);
                                             } 
     ;
 
